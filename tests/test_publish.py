@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import xml.etree.ElementTree as ET
 
 import pytest
 from src.common.http import HttpClient
 from src.publish.feed import render_feed
-from src.publish.issue import GitHubClient, issue_title
+from src.publish.issue import BUSINESS_LABELS, GitHubClient, issue_title
 from src.publish.pages import build_site, markdown_to_html
 from src.publish.readme import END_MARKER, START_MARKER, render_index, update_readme
 from src.publish.writer import list_reports, read_report, report_path, write_report
@@ -142,6 +143,9 @@ def test_github_client_unavailable_without_credentials():
 def test_ensure_issue_creates_when_absent():
     transport = FakeTransport(
         routes={
+            "GET https://api.github.com/repos/o/r/labels": json_route(
+                [{"name": name} for name in BUSINESS_LABELS]
+            ),
             "GET https://api.github.com/search/issues": json_route({"items": []}),
             "POST https://api.github.com/repos/o/r/issues": json_route(
                 {"number": 7, "html_url": "https://github.com/o/r/issues/7"}
@@ -153,7 +157,117 @@ def test_ensure_issue_creates_when_absent():
     )
     assert created is True
     assert issue["number"] == 7
-    assert transport.call_count == 2
+    posts = [call for call in transport.calls if call[0] == "POST"]
+    assert len(posts) == 1  # 标签已存在 → 只发一次建帖请求
+
+
+@pytest.mark.parametrize("name", ["gua", "daily-gua", "gua-submit", "gua-accepted"])
+def test_business_labels_are_declared_for_bootstrap(name):
+    """四个业务标签必须由代码自建，不能依赖维护者手工创建。"""
+    assert name in BUSINESS_LABELS
+
+
+def test_ensure_labels_creates_only_missing():
+    transport = FakeTransport(
+        routes={
+            "GET https://api.github.com/repos/o/r/labels": json_route(
+                [{"name": "bug"}, {"name": "gua"}]
+            ),
+            "POST https://api.github.com/repos/o/r/labels": json_route({"name": "x"}, status=201),
+        }
+    )
+    status = _client(transport).ensure_labels(["gua", "daily-gua", "BUG"])
+    assert status == {"gua": "exists", "daily-gua": "created", "BUG": "exists"}
+    posts = [call for call in transport.calls if call[0] == "POST"]
+    assert len(posts) == 1
+
+
+def test_ensure_labels_tolerates_already_exists_race():
+    """并发创建返回 422/409 时按已存在处理，不抛异常。"""
+    calls: list[tuple[str, str]] = []
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        calls.append((method, url))
+        if method == "GET" and "/labels" in url:
+            return 200, json.dumps([{"name": "gua"}]).encode()
+        if method == "POST" and url.endswith("/labels"):
+            return 422, b'{"message":"already_exists"}'
+        return 404, b""
+
+    client = GitHubClient(
+        HttpClient(transport=transport, retries=0, sleep=lambda _: None),
+        token="gh-test-token",
+        repository="o/r",
+    )
+    status = client.ensure_labels(["gua", "daily-gua"])
+    assert status == {"gua": "exists", "daily-gua": "exists"}
+
+
+def test_ensure_issue_retries_without_labels_on_422():
+    """标签缺失导致 422：去标签重试并留下告警，绝不让标签阻断出报。"""
+    created_bodies: list[dict] = []
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "GET" and url.endswith("/labels?per_page=100"):
+            return 200, json.dumps([{"name": "gua"}, {"name": "daily-gua"}]).encode()
+        if method == "GET" and "search/issues" in url:
+            return 200, json.dumps({"items": []}).encode()
+        if method == "POST" and url.endswith("/issues"):
+            created_bodies.append(json.loads(data.decode()) if data else {})
+            if len(created_bodies) == 1:
+                return 422, b'{"message":"Validation Failed"}'
+            return 201, json.dumps({"number": 9, "html_url": "u"}).encode()
+        return 404, b""
+
+    client = GitHubClient(
+        HttpClient(transport=transport, retries=0, sleep=lambda _: None),
+        token="gh-test-token",
+        repository="o/r",
+    )
+    issue, created = client.ensure_issue(
+        title=issue_title("2026-11-11"), body="body", labels=["gua", "daily-gua"]
+    )
+    assert created is True
+    assert issue["number"] == 9
+    assert "labels" in created_bodies[0]
+    assert "labels" not in created_bodies[1]  # 重试时去标签
+    assert any("去标签" in warning for warning in client.drain_warnings())
+
+
+def test_add_labels_does_not_raise_when_label_missing():
+    """gua-accepted 不存在时不能中断回执链路：建标后打标，失败只告警。"""
+    transport = FakeTransport(
+        routes={
+            "GET https://api.github.com/repos/o/r/labels": json_route([{"name": "bug"}]),
+            "POST https://api.github.com/repos/o/r/labels": json_route({"name": "gua-accepted"}),
+            "POST https://api.github.com/repos/o/r/issues/7/labels": json_route(
+                [{"name": "gua-accepted"}]
+            ),
+        }
+    )
+    client = _client(transport)
+    labels = client.add_labels(7, ["gua-accepted"])
+    assert labels == [{"name": "gua-accepted"}]
+    posts = [call for call in transport.calls if call[0] == "POST"]
+    assert len(posts) == 2  # 先建标、再打标
+    assert client.drain_warnings() == []
+
+
+def test_add_labels_skips_when_label_creation_fails():
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "GET" and "/labels" in url:
+            return 403, b'{"message":"Resource not accessible"}'
+        if method == "POST" and url.endswith("/labels"):
+            return 403, b'{"message":"Resource not accessible"}'
+        return 404, b""
+
+    client = GitHubClient(
+        HttpClient(transport=transport, retries=0, sleep=lambda _: None),
+        token="gh-test-token",
+        repository="o/r",
+    )
+    assert client.add_labels(7, ["gua-accepted"]) == []
+    assert any("创建失败" in warning for warning in client.drain_warnings())
 
 
 def test_ensure_issue_is_idempotent_by_title():
@@ -175,6 +289,9 @@ def test_ensure_issue_is_idempotent_by_title():
 def test_comment_and_list_comments():
     transport = FakeTransport(
         routes={
+            "GET https://api.github.com/repos/o/r/labels": json_route(
+                [{"name": "gua-accepted"}]
+            ),
             "GET https://api.github.com/repos/o/r/issues/7/comments": json_route(
                 [{"id": 11, "body": "/vote 🍉"}]
             ),

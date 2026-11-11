@@ -145,6 +145,10 @@ def test_daily_creates_issue_when_github_configured(workspace, monkeypatch, caps
     transport = _mirror_transport(
         mirror_payload,
         extra={
+            "GET https://api.github.com/repos/o/r/labels": json_route(
+                [{"name": "gua"}, {"name": "daily-gua"}]
+            ),
+            "POST https://api.github.com/repos/o/r/labels": json_route({"name": "new"}, status=201),
             "GET https://api.github.com/search/issues": json_route({"items": []}),
             "POST https://api.github.com/repos/o/r/issues": json_route(
                 {"number": 7, "html_url": "https://github.com/o/r/issues/7"}
@@ -158,6 +162,33 @@ def test_daily_creates_issue_when_github_configured(workspace, monkeypatch, caps
     payload = _output(capsys)
     assert payload["issue"]["number"] == 7
     assert payload["issue"]["created"] is True
+    assert payload["issue"]["warnings"] == []
+    # 首次运行自愈：gua-submit / gua-accepted 不存在时被创建（投瓜链路才有触发标签）
+    assert any(call[0] == "POST" and call[1].endswith("/labels") for call in transport.calls)
+
+
+def test_daily_still_reports_when_labels_cannot_be_created(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """标签建不出来也必须出报：去标签重试 + 告警，不让 Issue 步骤整体失败。"""
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    transport = _mirror_transport(
+        mirror_payload,
+        extra={
+            "GET https://api.github.com/search/issues": json_route({"items": []}),
+            "POST https://api.github.com/repos/o/r/issues": json_route(
+                {"number": 8, "html_url": "https://github.com/o/r/issues/8"}
+            ),
+        },
+    )
+    _patch_transport(monkeypatch, daily, transport)
+
+    code = daily.run(["--date", "2026-11-11", "--no-llm"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["issue"]["number"] == 8
+    assert any("标签" in warning for warning in payload["issue"]["warnings"])
 
 
 def test_daily_dry_run_writes_nothing(workspace, monkeypatch, capsys, mirror_payload):

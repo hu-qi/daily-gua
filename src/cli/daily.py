@@ -20,7 +20,7 @@ from ..common.frontmatter import digest_from_text
 from ..common.http import HttpClient
 from ..common.redaction import setup_logging
 from ..publish.feed import FEED_FILE, render_feed
-from ..publish.issue import GitHubClient, issue_title
+from ..publish.issue import BUSINESS_LABELS, GitHubClient, issue_title
 from ..publish.readme import update_readme
 from ..publish.writer import list_reports, write_report
 from ..rank.scorer import RankedResult, rank_posts
@@ -137,6 +137,9 @@ def run(argv: list[str] | None = None) -> int:
             api_base=settings.github_api_base,
         )
         if client.available:
+            # 首次运行自愈：幂等创建 gua / daily-gua / gua-submit / gua-accepted 四个业务标签，
+            # 否则投瓜模板标签不存在会被 GitHub 静默丢弃，gua-from-issue 链路永不触发。
+            client.ensure_labels(BUSINESS_LABELS)
             report_url = (
                 f"{client.web_base()}/blob/main/{gua_dir}/{date}.md"
                 if client.repository
@@ -150,6 +153,7 @@ def run(argv: list[str] | None = None) -> int:
                 "number": issue.get("number"),
                 "url": issue.get("html_url"),
                 "created": created,
+                "warnings": client.drain_warnings(),
             }
         else:
             issue_payload = {"skipped": "GitHub 未配置（缺 GITHUB_TOKEN / GITHUB_REPOSITORY）"}
@@ -167,7 +171,7 @@ def run(argv: list[str] | None = None) -> int:
             "report_file": str(report_file) if report_file else None,
             "issue": issue_payload,
             "sources_used": collected.sources,
-            "warnings": collected.warnings,
+            "warnings": [*collected.warnings, *(issue_payload.get("warnings") or [])],
             "notes": generated.notes,
             "dry_run": args.dry_run,
         }

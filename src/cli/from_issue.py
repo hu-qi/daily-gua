@@ -165,10 +165,14 @@ def run(argv: list[str] | None = None) -> int:
         repository=settings.github_repository,
         api_base=settings.github_api_base,
     )
-    if issue_number and client.available and not body:
-        detail = client.get_issue(issue_number)
-        body = str(detail.get("body") or "")
-        title = str(detail.get("title") or "")
+    if issue_number and client.available:
+        # 幂等建标：模板 labels: ["gua-submit"] 若在仓库不存在会被 GitHub 静默丢弃，
+        # 导致 gua-from-issue 的标签触发条件永不成立；这里先补建，再读正文。
+        client.ensure_labels(["gua-submit", "gua-accepted"])
+        if not body:
+            detail = client.get_issue(issue_number)
+            body = str(detail.get("body") or "")
+            title = str(detail.get("title") or "")
 
     urls = extract_urls(body)
     if not urls:
