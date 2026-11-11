@@ -28,6 +28,8 @@ def url_problem(url: str) -> str:
     """投瓜链接的静态安全校验：只允许 http/https、拒绝本机/私网/link-local 目标。
 
     返回空串表示可探测；否则返回中文原因（供回执如实说明「已跳过」）。
+    这里只做无网络的字面量校验；**域名解析结果与每次重定向**由
+    ``common.http.url_target_problem`` 在真正发起连接前再次校验（防 DNS 重绑定/302 绕过）。
     """
     try:
         parts = urlsplit(str(url or "").strip())

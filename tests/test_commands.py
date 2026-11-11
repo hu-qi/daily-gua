@@ -6,6 +6,7 @@ from datetime import timedelta
 
 import pytest
 from src.agent.commands import (
+    PROBE_BLOCKED,
     PROBE_OK,
     PROBE_TIMEOUT,
     PROBE_UNREACHABLE,
@@ -13,6 +14,7 @@ from src.agent.commands import (
     parse_command,
     parse_vote,
     probe_sources,
+    probe_url,
     render_fact_check,
     render_more,
     render_vote,
@@ -192,6 +194,25 @@ def test_fact_check_default_probe_uses_http_and_flags_404():
     assert any(call[0] == "GET" and call[1] == "https://example.com/news/1" for call in transport.calls)
     assert "1/2 可访问" in text
     assert "example.com/news/1 不可访问" in text
+
+
+def test_probe_url_blocks_non_public_target_without_request():
+    """私网/本机链接在发起请求前就被拒绝，不得写成「可访问」或「超时」。"""
+
+    class ExplodingHttp:
+        def request(self, *args, **kwargs):  # noqa: ANN001 - 不应被调用
+            raise AssertionError("不应发起请求")
+
+    assert probe_url("file:///etc/passwd", ExplodingHttp()) == PROBE_BLOCKED
+    assert probe_url("http://127.0.0.1/admin", ExplodingHttp()) == PROBE_BLOCKED
+
+
+def test_probe_url_maps_transport_ssrf_rejection_to_blocked():
+    class BlockedHttp:
+        def request(self, *args, **kwargs):  # noqa: ANN001
+            raise HttpError("拒绝访问：域名解析到非公网地址", blocked=True)
+
+    assert probe_url("https://evil.example/x", BlockedHttp()) == PROBE_BLOCKED
 
 
 def test_probe_sources_dedupes_and_limits():

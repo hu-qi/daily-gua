@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 
+from ..collect.web import url_problem
 from ..collect.x_mirror import XMirrorCollector, is_x_status_url
 from ..common.frontmatter import ReportDigest
 from ..common.http import HttpClient, HttpError
@@ -28,12 +29,14 @@ PROBE_OK = "ok"
 PROBE_UNREACHABLE = "unreachable"
 PROBE_TIMEOUT = "timeout"
 PROBE_SKIPPED = "skipped"
+PROBE_BLOCKED = "blocked"
 MAX_PROBED_SOURCES = 5
 PROBE_STATE_TEXT = {
     PROBE_OK: "✅ 可访问",
     PROBE_UNREACHABLE: "❌ 不可访问",
     PROBE_TIMEOUT: "⚠️ 探测超时/无法判定",
     PROBE_SKIPPED: "未探测",
+    PROBE_BLOCKED: "⛔ 已拒绝（非公网地址）",
 }
 
 
@@ -48,13 +51,18 @@ def _normalize_state(value: object) -> str:
 def probe_url(url: str, http: HttpClient) -> str:
     """对单条链接做一次真实 HTTP 探测（GET 跟随，不解析内容）。
 
+    - 非 http/https、本机/私网地址 → ``blocked``（连接前即拒绝，不会发起请求）；
     - 2xx/3xx → ``ok``；
     - 4xx/5xx → ``unreachable``；
     - 网络异常/超时（无状态码）→ ``timeout``，如实标注而**不**假定可访问。
     """
+    if url_problem(url):
+        return PROBE_BLOCKED
     try:
         http.request("GET", url, headers={"Accept": "*/*"}, expect_json=False)
     except HttpError as exc:
+        if exc.blocked:
+            return PROBE_BLOCKED
         return PROBE_TIMEOUT if exc.status is None else PROBE_UNREACHABLE
     return PROBE_OK
 

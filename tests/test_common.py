@@ -166,7 +166,8 @@ def test_transport_rejects_oversized_response(monkeypatch):
         def read(self, n=-1):  # noqa: ANN001
             return b"x" * (n if n and n > 0 else 1024)
 
-    monkeypatch.setattr(http_module.urllib.request, "urlopen", lambda *a, **k: FakeResponse())
+    monkeypatch.setattr(http_module, "url_target_problem", lambda *a, **k: "")
+    monkeypatch.setattr(http_module._OPENER, "open", lambda *a, **k: FakeResponse())
     with pytest.raises(HttpError) as excinfo:
         http_module.urllib_transport("GET", "https://example.com/huge", {}, None, 5)
     assert "上限" in str(excinfo.value)
@@ -187,7 +188,79 @@ def test_transport_returns_body_under_limit(monkeypatch):
         def read(self, n=-1):  # noqa: ANN001
             return b'{"ok":true}'
 
-    monkeypatch.setattr(http_module.urllib.request, "urlopen", lambda *a, **k: FakeResponse())
+    monkeypatch.setattr(http_module, "url_target_problem", lambda *a, **k: "")
+    monkeypatch.setattr(http_module._OPENER, "open", lambda *a, **k: FakeResponse())
     status, body = http_module.urllib_transport("GET", "https://example.com/x", {}, None, 5)
     assert status == 200 and body == b'{"ok":true}'
 
+
+
+def _resolver(mapping: dict[str, str]):
+    import socket
+
+    def resolve(host, port, **kwargs):  # noqa: ANN001 - 模拟 getaddrinfo
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (mapping[host], port))]
+
+    return resolve
+
+
+def test_url_target_problem_rejects_domain_resolving_to_private_ip():
+    """仅校验字面 IP 会漏掉「公网域名解析到 127.0.0.1」的 SSRF。"""
+    from src.common import http as http_module
+
+    assert "非公网" in http_module.url_target_problem(
+        "https://evil.example/x", resolve=_resolver({"evil.example": "127.0.0.1"})
+    )
+    assert "非公网" in http_module.url_target_problem(
+        "https://rebind.example/x", resolve=_resolver({"rebind.example": "169.254.169.254"})
+    )
+    assert (
+        http_module.url_target_problem(
+            "https://ok.example/x", resolve=_resolver({"ok.example": "93.184.216.34"})
+        )
+        == ""
+    )
+
+
+def test_url_target_problem_rejects_non_http_and_literal_private():
+    from src.common import http as http_module
+
+    assert http_module.url_target_problem("file:///etc/passwd") != ""
+    assert http_module.url_target_problem("http://127.0.0.1/admin") != ""
+    assert http_module.url_target_problem("http://[::1]/") != ""
+
+
+def test_urllib_transport_blocks_private_dns_before_connecting(monkeypatch):
+    import socket
+
+    from src.common import http as http_module
+
+    def fake_getaddrinfo(host, port, **kwargs):  # noqa: ANN001 - 模拟解析
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.5", port))]
+
+    called = {"open": False}
+
+    def fail_open(*args, **kwargs):  # noqa: ANN001
+        called["open"] = True
+        raise AssertionError("不应发起连接")
+
+    monkeypatch.setattr(http_module.socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(http_module._OPENER, "open", fail_open)
+    with pytest.raises(HttpError) as excinfo:
+        http_module.urllib_transport("GET", "https://evil.example/x", {}, None, 5)
+    assert excinfo.value.blocked is True
+    assert called["open"] is False
+
+
+def test_redirect_handler_revalidates_each_hop():
+    import urllib.request
+
+    from src.common import http as http_module
+
+    handler = http_module.SafeRedirectHandler(
+        resolve=_resolver({"ok.example": "93.184.216.34", "evil.example": "127.0.0.1"})
+    )
+    request = urllib.request.Request("https://ok.example/")
+    with pytest.raises(HttpError) as excinfo:
+        handler.redirect_request(request, None, 302, "", {}, "https://evil.example/x")
+    assert excinfo.value.blocked is True
