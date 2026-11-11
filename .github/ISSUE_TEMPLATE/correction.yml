@@ -1,0 +1,54 @@
+name: "⚠️ 更正 / 申诉"
+description: 当事方或读者指出瓜报中的错误，提交证据后由维护者置顶更正
+title: "[更正] "
+labels: ["correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        更正请求会在核查后**置顶到当日 Issue**，并在瓜报页顶部追加「更正说明」。
+        如果你是当事方，请优先附上你本人的公开回应链接。
+  - type: input
+    id: report_date
+    attributes:
+      label: 涉及哪一天的瓜报
+      description: 格式 YYYY-MM-DD（见 gua/ 目录或当日 Issue 标题）
+      placeholder: "2026-11-11"
+    validations:
+      required: true
+  - type: textarea
+    id: issue_text
+    attributes:
+      label: 需要更正的内容
+      description: 请引用原文，并说明哪里不准确。
+      placeholder: 瓜报中「……」这句话不准确，实际情况是……
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 证据链接
+      description: 可核查的原始链接（当事方回应、公告、后台截图打码后的公开版本等）。
+      placeholder: https://x.com/xxx/status/...
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: 你的身份
+      options:
+        - 当事人本人
+        - 当事人授权代表
+        - 当事方团队
+        - 读者（发现错误）
+    validations:
+      required: true
+  - type: checkboxes
+    id: request
+    attributes:
+      label: 请求处理方式
+      options:
+        - label: 希望在当日 Issue 置顶更正
+          required: false
+        - label: 希望删除相关内容（请说明法律依据）
+          required: false
