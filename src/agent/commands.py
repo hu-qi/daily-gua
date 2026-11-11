@@ -107,9 +107,13 @@ def parse_vote(argument: str) -> str | None:
 
 
 def tally_votes(comments: list[dict[str, object]]) -> tuple[int, int]:
-    """统计票数：同一条评论只算一次，只认 ``/vote`` 命令。"""
-    melon = bad = 0
-    for item in comments:
+    """统计票数：**按用户去重**（同一用户取最后一次有效票），只认 ``/vote`` 命令。
+
+    与回帖文案「每位用户只计一票」以及 spec FR-3「每人每票型一次」一致：
+    重复 ``/vote 🍉`` 不会叠加，同时投 🍉 与 🫠 也只算最后那一次。
+    """
+    votes: dict[str, tuple[str, tuple[str, int]]] = {}
+    for index, item in enumerate(comments):
         body = str(item.get("body") or "")
         user = item.get("user") or {}
         login = str(user.get("login") or "") if isinstance(user, dict) else ""
@@ -119,10 +123,15 @@ def tally_votes(comments: list[dict[str, object]]) -> tuple[int, int]:
         if command is None or command.name != "vote":
             continue
         vote = parse_vote(command.argument)
-        if vote == VOTE_MELON:
-            melon += 1
-        elif vote == VOTE_BAD:
-            bad += 1
+        if vote is None:
+            continue
+        # 以创建时间（缺失时按出现顺序）排序，取最后一次投票
+        key = (str(item.get("created_at") or ""), index)
+        current = votes.get(login.lower())
+        if current is None or key >= current[1]:
+            votes[login.lower()] = (vote, key)
+    melon = sum(1 for vote, _ in votes.values() if vote == VOTE_MELON)
+    bad = sum(1 for vote, _ in votes.values() if vote == VOTE_BAD)
     return melon, bad
 
 
@@ -251,7 +260,7 @@ def render_vote(melon: int, bad: int, *, vote: str | None, author: str) -> str:
             f"🍉 真瓜：{melon} 票（{melon_pct}%）",
             f"🫠 假瓜：{bad} 票（{100 - melon_pct}%）",
             "",
-            "计票口径：每位用户每类命令计一次，机器人评论不计票。",
+            "计票口径：每位用户只计一票（同一用户重复投票以最后一次为准），机器人评论不计票。",
         ]
     )
     return "\n".join(lines)

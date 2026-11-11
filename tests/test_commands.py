@@ -74,6 +74,42 @@ def test_tally_votes_ignores_bots_and_duplicates():
     assert tally_votes(comments) == (1, 1)
 
 
+def test_tally_votes_dedupes_same_user_repeated_votes():
+    """同一用户重复 /vote 🍉 不得叠加（spec FR-3：每人每票型一次）。"""
+    comments = [
+        {"user": {"login": "alice"}, "body": "/vote 🍉"},
+        {"user": {"login": "alice"}, "body": "/vote 🍉"},
+        {"user": {"login": "alice"}, "body": "/vote 🍉"},
+        {"user": {"login": "bob"}, "body": "/vote 🫠"},
+    ]
+    assert tally_votes(comments) == (1, 1)
+
+
+def test_tally_votes_same_user_cannot_vote_both_sides():
+    """同时投 🍉 与 🫠 只保留最后一次（否则公开票数会大于人数）。"""
+    comments = [
+        {"user": {"login": "alice"}, "body": "/vote 🍉"},
+        {"user": {"login": "alice"}, "body": "/vote 🫠"},
+    ]
+    assert tally_votes(comments) == (0, 1)
+    assert tally_votes(list(reversed(comments))) == (1, 0)
+
+
+def test_tally_votes_uses_created_at_order_and_case_insensitive_login():
+    comments = [
+        {"user": {"login": "Alice"}, "body": "/vote 🫠", "created_at": "2026-11-11T01:00:00Z"},
+        {"user": {"login": "alice"}, "body": "/vote 🍉", "created_at": "2026-11-11T02:00:00Z"},
+    ]
+    assert tally_votes(comments) == (1, 0)
+    assert tally_votes(list(reversed(comments))) == (1, 0)  # 顺序打乱仍以 created_at 为准
+
+
+def test_render_vote_states_dedupe_rule():
+    text = render_vote(2, 1, vote=None, author="alice")
+    assert "每位用户只计一票" in text
+    assert "重复投票以最后一次为准" in text
+
+
 def test_render_vote_without_votes():
     text = render_vote(0, 0, vote=None, author="alice")
     assert "还没有有效票" in text
