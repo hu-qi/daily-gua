@@ -67,7 +67,7 @@ class GitHubClient:
     def _patch(self, url: str, payload: dict[str, Any]) -> Any:
         return self._http.request("PATCH", url, headers=self._headers(), payload=payload)
 
-    def _warn(self, message: str) -> None:
+    def warn(self, message: str) -> None:
         self.last_warnings.append(message)
         LOGGER.warning(message)
 
@@ -81,7 +81,7 @@ class GitHubClient:
         try:
             data = self._get(self._url("/labels?per_page=100"))
         except HttpError as exc:
-            self._warn(f"读取仓库标签失败（{exc}），将逐个尝试创建")
+            self.warn(f"读取仓库标签失败（{exc}），将逐个尝试创建")
             return set()
         names = {
             str(item.get("name") or "").strip().lower()
@@ -114,7 +114,7 @@ class GitHubClient:
                     self._known_labels.add(name.lower())
                     status[name] = "exists"
                 else:
-                    self._warn(f"创建标签 {name} 失败（{exc}）")
+                    self.warn(f"创建标签 {name} 失败（{exc}）")
                     status[name] = "failed"
                 continue
             self._known_labels.add(name.lower())
@@ -134,7 +134,11 @@ class GitHubClient:
         return data
 
     def find_issue_by_title(self, title: str) -> dict[str, Any] | None:
-        """先搜索再匹配精确标题；搜索不可用时回退到最近 issue 列表。"""
+        """先搜索再匹配精确标题；**搜索成功但未命中**也回退列表（搜索索引有延迟）。
+
+        GitHub 搜索索引可能落后于刚创建的 Issue，若仅在 ``HttpError`` 时才回退，
+        同日重跑会因「搜不到」重复建帖 —— 标题幂等在真实时序下不成立。
+        """
         query = quote(f'repo:{self._repo} in:title "{title}"')
         try:
             data = self._get(f"{self._base}/search/issues?q={query}&per_page=20")
@@ -142,7 +146,7 @@ class GitHubClient:
                 for item in data.get("items") or []:
                     if isinstance(item, dict) and item.get("title") == title:
                         return item
-                return None
+                LOGGER.info("搜索未命中精确标题，回退到列表匹配: %s", title)
         except HttpError as exc:  # 搜索 API 限流/不可用时回退
             LOGGER.warning("Issue 搜索失败，回退到列表匹配: %s", exc)
         try:
@@ -174,13 +178,13 @@ class GitHubClient:
         usable = [name for name in wanted if status.get(name) != "failed"]
         missing = [name for name in wanted if name not in usable]
         if missing:
-            self._warn(f"标签 {missing} 创建失败，本次 Issue 将不带这些标签")
+            self.warn(f"标签 {missing} 创建失败，本次 Issue 将不带这些标签")
         try:
             return self.create_issue(title=title, body=body, labels=usable or None), True
         except HttpError as exc:
             if exc.status != 422 or not usable:
                 raise
-            self._warn(f"创建 Issue 带标签被 GitHub 拒绝（422: {exc}），已去标签重试")
+            self.warn(f"创建 Issue 带标签被 GitHub 拒绝（422: {exc}），已去标签重试")
             return self.create_issue(title=title, body=body, labels=None), True
 
     def update_issue_body(self, number: int, body: str) -> dict[str, Any]:
@@ -203,14 +207,14 @@ class GitHubClient:
         status = self.ensure_labels(wanted)
         usable = [name for name in wanted if status.get(name) != "failed"]
         if not usable:
-            self._warn(f"标签 {wanted} 创建失败，Issue #{number} 未打标签")
+            self.warn(f"标签 {wanted} 创建失败，Issue #{number} 未打标签")
             return []
         try:
             data = self._post(self._url(f"/issues/{number}/labels"), {"labels": usable})
         except HttpError as exc:
             if exc.status != 422:
                 raise
-            self._warn(f"Issue #{number} 打标签被拒绝（422: {exc}），已跳过标签")
+            self.warn(f"Issue #{number} 打标签被拒绝（422: {exc}），已跳过标签")
             return []
         return [item for item in data if isinstance(item, dict)] if isinstance(data, list) else []
 

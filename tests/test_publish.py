@@ -286,6 +286,39 @@ def test_ensure_issue_is_idempotent_by_title():
     assert transport.call_count == 1
 
 
+def test_ensure_issue_falls_back_to_list_when_search_misses():
+    """搜索索引有延迟：搜索成功但未命中时也必须回退列表，否则同日重跑会重复建帖。"""
+    transport = FakeTransport(
+        routes={
+            "GET https://api.github.com/search/issues": json_route({"items": []}),
+            "GET https://api.github.com/repos/o/r/issues?state=all": json_route(
+                [
+                    {"number": 3, "title": issue_title("2026-11-11")},
+                    {"number": 4, "title": "别的 Issue"},
+                ]
+            ),
+        }
+    )
+    issue, created = _client(transport).ensure_issue(
+        title=issue_title("2026-11-11"), body="body"
+    )
+    assert created is False
+    assert issue["number"] == 3
+    assert [call[1] for call in transport.calls if "/issues?state=all" in call[1]]
+
+
+def test_find_issue_by_title_ignores_pull_requests():
+    transport = FakeTransport(
+        routes={
+            "GET https://api.github.com/search/issues": json_route({"items": []}),
+            "GET https://api.github.com/repos/o/r/issues?state=all": json_route(
+                [{"number": 9, "title": issue_title("2026-11-11"), "pull_request": {}}]
+            ),
+        }
+    )
+    assert _client(transport).find_issue_by_title(issue_title("2026-11-11")) is None
+
+
 def test_comment_and_list_comments():
     transport = FakeTransport(
         routes={

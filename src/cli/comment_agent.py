@@ -116,7 +116,10 @@ def run(argv: list[str] | None = None) -> int:
         return emit({"ok": True, "skipped": "非命令评论"})
     if login and ("bot" in login or login.endswith("[bot]")):
         return emit({"ok": True, "skipped": "忽略机器人评论"})
-    if is_handled(state_dir, comment_id):
+    # comment_id 有效才做幂等：workflow_dispatch 手工试跑默认 0，不能把 "0" 落盘，
+    # 否则第一次手工试跑之后所有手工试跑都会被「已处理」跳过。
+    idempotent = comment_id > 0
+    if idempotent and is_handled(state_dir, comment_id):
         return emit({"ok": True, "skipped": "该评论已处理（幂等去重）", "comment_id": comment_id})
 
     date = pick_report_date(state_dir, gua_dir, title)
@@ -175,7 +178,8 @@ def run(argv: list[str] | None = None) -> int:
         if not client.available:
             return fail("GitHub 未配置，无法回帖（GITHUB_TOKEN / GITHUB_REPOSITORY）")
         posted = client.comment(issue_number, reply)
-        mark_handled(state_dir, comment_id, command=command.name, issue=issue_number)
+        if idempotent:
+            mark_handled(state_dir, comment_id, command=command.name, issue=issue_number)
 
     return emit(
         {
@@ -185,6 +189,7 @@ def run(argv: list[str] | None = None) -> int:
             "command": command.name,
             "author": author,
             "posted": bool(posted),
+            "idempotent": idempotent,
             "comment_url": posted.get("html_url") if isinstance(posted, dict) else "",
             "reply": reply,
             "dry_run": args.dry_run,

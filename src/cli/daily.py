@@ -17,7 +17,7 @@ from ..agent.render import render_issue_body, render_markdown
 from ..collect.service import collect
 from ..common.config import Settings, load_settings, site_url
 from ..common.frontmatter import digest_from_text
-from ..common.http import HttpClient
+from ..common.http import HttpClient, HttpError
 from ..common.redaction import setup_logging
 from ..publish.feed import FEED_FILE, render_feed
 from ..publish.issue import BUSINESS_LABELS, GitHubClient, issue_title
@@ -149,6 +149,14 @@ def run(argv: list[str] | None = None) -> int:
             issue, created = client.ensure_issue(
                 title=issue_title(date), body=body, labels=["gua", "daily-gua"]
             )
+            if not created:
+                # 同日重跑：瓜报文件已覆盖，Issue 正文必须同步刷新，否则页面与 Issue 不一致
+                number = int(issue.get("number") or 0)
+                if number:
+                    try:
+                        client.update_issue_body(number, body)
+                    except HttpError as exc:
+                        client.warn(f"刷新 Issue #{number} 正文失败（{exc}），正文仍是上一次的版本")
             issue_payload = {
                 "number": issue.get("number"),
                 "url": issue.get("html_url"),

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 from src.cli import comment_agent, daily, from_issue, pages, x_share
-from src.common.http import HttpClient
-from tests.conftest import SEED_URL, FakeTransport, json_route
+from src.common.http import HttpClient as RealHttpClient
+from tests.conftest import RSS_SAMPLE, SEED_URL, FakeTransport, json_route
 
 GOOD_PAYLOAD = {
     "headline": "AI 圈互撕：博主称被大号爆锤",
@@ -70,7 +70,7 @@ def _patch_transport(monkeypatch, module, transport: FakeTransport) -> None:
     monkeypatch.setattr(
         module,
         "HttpClient",
-        lambda **kwargs: HttpClient(transport=transport, retries=0, sleep=lambda _: None),
+        lambda **kwargs: RealHttpClient(transport=transport, retries=0, sleep=lambda _: None),
     )
 
 
@@ -294,6 +294,77 @@ def test_comment_agent_skips_bot_comments(workspace, capsys):
     assert code == 0
     payload = _output(capsys)
     assert payload.get("skipped")
+
+
+def test_daily_refreshes_issue_body_on_same_day_rerun(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """同日重跑：瓜报文件被覆盖，Issue 正文必须同步刷新（update_issue_body 不再无调用方）。"""
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    patched: list[dict] = []
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "GET" and url.endswith("/labels?per_page=100"):
+            return 200, json.dumps(
+                [{"name": name} for name in ("gua", "daily-gua", "gua-submit", "gua-accepted")]
+            ).encode()
+        if method == "GET" and "search/issues" in url:
+            return 200, json.dumps(
+                {"items": [{"number": 3, "title": "🍉 每日一瓜 2026-11-11", "html_url": "u"}]}
+            ).encode()
+        if method == "PATCH" and url.endswith("/issues/3"):
+            patched.append(json.loads(data.decode()) if data else {})
+            return 200, json.dumps({"number": 3, "body": "new"}).encode()
+        if "api.fxtwitter.com" in url:
+            return json_route(mirror_payload)
+        if "feed.example" in url:
+            return 200, RSS_SAMPLE.encode()
+        return 404, b""
+
+    monkeypatch.setattr(
+        daily,
+        "HttpClient",
+        lambda **kwargs: RealHttpClient(transport=transport, retries=0, sleep=lambda _: None),
+    )
+    code = daily.run(["--date", "2026-11-11", "--no-llm"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["issue"]["number"] == 3
+    assert payload["issue"]["created"] is False
+    assert len(patched) == 1
+    assert "🍉 每日一瓜 2026-11-11" in patched[0]["body"]
+
+
+def test_comment_agent_manual_run_without_comment_id_is_not_persisted(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """workflow_dispatch 手工试跑 comment_id=0：不得把 "0" 写进幂等状态。"""
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    (workspace / "gua").mkdir()
+    (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "POST" and url.endswith("/issues/1/comments"):
+            return 201, json.dumps({"id": 55, "html_url": "c55"}).encode()
+        if "api.fxtwitter.com" in url:
+            return json_route(mirror_payload)
+        return 404, b""
+
+    monkeypatch.setattr(
+        comment_agent,
+        "HttpClient",
+        lambda **kwargs: RealHttpClient(transport=transport, retries=0, sleep=lambda _: None),
+    )
+    for _ in range(2):
+        code = comment_agent.run(["--issue", "1", "--comment-id", "0", "--body", "/more"])
+        assert code == 0
+        payload = _output(capsys)
+        assert payload["posted"] is True
+        assert payload["idempotent"] is False
+    state_file = workspace / "state" / "handled_comments.json"
+    assert not state_file.is_file()
 
 
 def test_x_share_draft_dry_run(workspace, capsys):
