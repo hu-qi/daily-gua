@@ -191,6 +191,37 @@ def test_daily_still_reports_when_labels_cannot_be_created(
     assert any("标签" in warning for warning in payload["issue"]["warnings"])
 
 
+def test_daily_still_reports_when_issue_creation_is_forbidden(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """建 Issue 403（凭据无 issues 写权限）不得中断出报：瓜报落盘、ok=true、错误如实上报。"""
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    transport = _mirror_transport(
+        mirror_payload,
+        extra={
+            "GET https://api.github.com/repos/o/r/labels": json_route(
+                [{"name": name} for name in ("gua", "daily-gua", "gua-submit", "gua-accepted")]
+            ),
+            "GET https://api.github.com/search/issues": json_route({"items": []}),
+            "GET https://api.github.com/repos/o/r/issues": json_route([]),
+            "POST https://api.github.com/repos/o/r/issues": json_route(
+                {"message": "Resource not accessible by integration"}, status=403
+            ),
+        },
+    )
+    _patch_transport(monkeypatch, daily, transport)
+
+    code = daily.run(["--date", "2026-11-11", "--no-llm"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["ok"] is True
+    assert payload["issue"].get("error")
+    assert "403" in payload["issue"]["error"]
+    assert (workspace / "gua" / "2026-11-11.md").is_file()
+    assert any("Issue" in warning for warning in payload["warnings"])
+
+
 def test_daily_dry_run_writes_nothing(workspace, monkeypatch, capsys, mirror_payload):
     _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
     code = daily.run(["--date", "2026-11-11", "--dry-run"])

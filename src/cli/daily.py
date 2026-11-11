@@ -140,29 +140,37 @@ def run(argv: list[str] | None = None) -> int:
             # 首次运行自愈：幂等创建 gua / daily-gua / gua-submit / gua-accepted 四个业务标签，
             # 否则投瓜模板标签不存在会被 GitHub 静默丢弃，gua-from-issue 链路永不触发。
             client.ensure_labels(BUSINESS_LABELS)
-            report_url = (
-                f"{client.web_base()}/blob/main/{gua_dir}/{date}.md"
-                if client.repository
-                else ""
-            )
-            body = render_issue_body(report, report_url=report_url, site_url=site_url())
-            issue, created = client.ensure_issue(
-                title=issue_title(date), body=body, labels=["gua", "daily-gua"]
-            )
-            if not created:
-                # 同日重跑：瓜报文件已覆盖，Issue 正文必须同步刷新，否则页面与 Issue 不一致
-                number = int(issue.get("number") or 0)
-                if number:
-                    try:
-                        client.update_issue_body(number, body)
-                    except HttpError as exc:
-                        client.warn(f"刷新 Issue #{number} 正文失败（{exc}），正文仍是上一次的版本")
-            issue_payload = {
-                "number": issue.get("number"),
-                "url": issue.get("html_url"),
-                "created": created,
-                "warnings": client.drain_warnings(),
-            }
+            try:
+                report_url = (
+                    f"{client.web_base()}/blob/main/{gua_dir}/{date}.md"
+                    if client.repository
+                    else ""
+                )
+                body = render_issue_body(report, report_url=report_url, site_url=site_url())
+                issue, created = client.ensure_issue(
+                    title=issue_title(date), body=body, labels=["gua", "daily-gua"]
+                )
+                if not created:
+                    # 同日重跑：瓜报文件已覆盖，Issue 正文必须同步刷新，否则页面与 Issue 不一致
+                    number = int(issue.get("number") or 0)
+                    if number:
+                        try:
+                            client.update_issue_body(number, body)
+                        except HttpError as exc:
+                            client.warn(
+                                f"刷新 Issue #{number} 正文失败（{exc}），正文仍是上一次的版本"
+                            )
+                issue_payload = {
+                    "number": issue.get("number"),
+                    "url": issue.get("html_url"),
+                    "created": created,
+                    "warnings": client.drain_warnings(),
+                }
+            except HttpError as exc:
+                # Issue 发布失败（如 403/限流）不得中断出报：瓜报、README、feed 已落盘，
+                # 如实上报错误并让工作流继续提交文件，Issue 可在修复权限后重跑补建。
+                client.warn(f"发布当日 Issue 失败（{exc}），瓜报已生成，Issue 待重试")
+                issue_payload = {"error": str(exc), "warnings": client.drain_warnings()}
         else:
             issue_payload = {"skipped": "GitHub 未配置（缺 GITHUB_TOKEN / GITHUB_REPOSITORY）"}
 
