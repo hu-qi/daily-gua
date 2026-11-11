@@ -131,7 +131,9 @@ def parse_text_payload(raw: str) -> dict[str, Any]:
         payload["summary"] = payload["headline"]
     score = _parse_melon_score(melon_lines)
     if score is not None:
-        payload["melon_score"] = score
+        # 只记录 LLM 自评分，绝不写成可被当真的 ``melon_score``：
+        # 公开指数由 melon_index() 确定性计算（见 report.resolve_melon）。
+        payload["llm_melon_score"] = score
     payload["_parsed_from"] = "text"
     if not any(payload[key] for key in ("summary", "timeline", "quotes", "stances", "unverified")):
         raise PayloadError("文本回退解析未得到任何可用段落")
@@ -152,6 +154,7 @@ def parse_llm_payload(raw: str) -> dict[str, Any]:
         if isinstance(result.get("melon_index"), dict):
             score = result["melon_index"].get("score")
             if isinstance(score, (int, float)):
-                result["melon_score"] = score
+                result["llm_melon_score"] = score
+                result.pop("melon_score", None)
         return result
     return parse_text_payload(raw)

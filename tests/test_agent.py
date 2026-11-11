@@ -10,7 +10,14 @@ from src.agent.llm import LLMError
 from src.agent.melons import coerce_melon_score, level_for, melon_index
 from src.agent.parse import PayloadError, extract_json_object, parse_llm_payload
 from src.agent.render import render_issue_body, render_markdown
-from src.agent.report import allowed_links, build_report, payload_is_cited, sanitize_payload
+from src.agent.report import (
+    allowed_links,
+    build_report,
+    melon_suggestion,
+    payload_is_cited,
+    resolve_melon,
+    sanitize_payload,
+)
 from src.common.config import Settings
 from src.common.frontmatter import digest_from_text
 from src.rank.scorer import rank_posts
@@ -96,7 +103,8 @@ def test_parse_llm_payload_text_fallback():
     assert "爆锤" in payload["summary"]
     assert payload["timeline"][0]["link"] == SEED_URL
     assert payload["unverified"] == ["对方身份未点名"]
-    assert payload["melon_score"] == 76
+    assert payload["llm_melon_score"] == 76
+    assert "melon_score" not in payload  # LLM 分数不可写成公开数值
 
 
 def test_parse_llm_payload_rejects_empty():
@@ -138,10 +146,68 @@ def test_build_report_with_cited_payload(sample_post):
         date="2026-11-11",
     )
     assert report.meta.generated_by == "llm"
-    assert report.melon is not None and report.melon.score == 76
+    assert report.melon is not None and report.melon.score == 74  # 确定性值，不被 LLM 的 76 覆盖
+    assert "76" in report.meta.llm_melon_suggestion
+    assert any("已按规则忽略" in reason for reason in report.melon.reasons)
     assert report.has_original_link()
     assert SEED_URL in report.original_links
     assert report.unverified
+
+
+def test_llm_score_never_overrides_deterministic_melon(sample_post):
+    """README/prompts/melons 承诺「LLM 不能改数值」：任何 LLM 分数都不得改变公开指数。"""
+    deterministic = melon_index(sample_post, now=FIXED_NOW)
+    for llm_score in (99, "3", 0, 1000, None, "很高", True):
+        resolved = resolve_melon(llm_score, deterministic, ["回复高于点赞"])
+        assert resolved.score == deterministic.score
+        assert resolved.level == deterministic.level
+        assert resolved.breakdown == deterministic.breakdown
+        assert "回复高于点赞" in resolved.reasons  # LLM 理由保留为补充
+
+
+def test_meta_records_llm_score_deviation(sample_post):
+    deterministic = melon_index(sample_post, now=FIXED_NOW)
+    assert melon_suggestion(deterministic.score, deterministic) == ""
+    assert melon_suggestion(None, deterministic) == ""
+    deviation = melon_suggestion(deterministic.score + 10, deterministic)
+    assert "已忽略" in deviation
+    assert "+10" in deviation
+
+
+def test_build_report_ignores_payload_melon_index(sample_post):
+    """payload 里的 melon_index.score（JSON 形状）只作对照，不覆盖确定性结果。"""
+    ranked = rank_posts([sample_post], now=FIXED_NOW)
+    deterministic = melon_index(sample_post, now=FIXED_NOW)
+    payload = dict(GOOD_PAYLOAD)
+    payload["melon_index"] = {"score": 95}
+    report = build_report(
+        payload,
+        primary=sample_post,
+        evidence=[sample_post],
+        candidates=ranked.candidates,
+        date="2026-11-11",
+        melon=deterministic,
+    )
+    assert report.melon is not None and report.melon.score == deterministic.score
+    assert "95" in report.meta.llm_melon_suggestion
+    assert "已按规则忽略" in report.melon.reasons[0]
+
+
+def test_build_report_with_cited_payload_keeps_meta_clean_when_scores_match(sample_post):
+    ranked = rank_posts([sample_post], now=FIXED_NOW)
+    deterministic = melon_index(sample_post, now=FIXED_NOW)
+    payload = dict(GOOD_PAYLOAD)
+    payload["melon_index"] = {"score": deterministic.score}
+    report = build_report(
+        payload,
+        primary=sample_post,
+        evidence=[sample_post],
+        candidates=ranked.candidates,
+        date="2026-11-11",
+        melon=deterministic,
+    )
+    assert report.meta.llm_melon_suggestion == ""
+    assert not any("已按规则忽略" in reason for reason in report.melon.reasons)
 
 
 def test_build_report_degrades_when_no_source_link(sample_post):
@@ -191,12 +257,12 @@ def test_render_markdown_contains_required_sections(sample_post):
     )
     markdown = render_markdown(report)
     for expected in ("## 一句话摘瓜", "## 吃瓜指数", "## 来龙去脉", "## 关键原文",
-                     "## ⚠️ 未证实", SEED_URL, "**76/100（热）**"):
+                     "## ⚠️ 未证实", SEED_URL, "**74/100（热）**"):
         assert expected in markdown, expected
 
     digest = digest_from_text(markdown)
     assert digest.date == "2026-11-11"
-    assert digest.melon_score == 76
+    assert digest.melon_score == 74
     assert digest.primary_url == SEED_URL
     assert digest.unverified
 

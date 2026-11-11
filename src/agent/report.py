@@ -12,7 +12,7 @@ from typing import Any
 
 from ..common.models import Post, canonical_url
 from ..common.privacy import mask_personal
-from .melons import MelonScore, coerce_melon_score, level_for, melon_index
+from .melons import MelonScore, coerce_melon_score, melon_index
 
 MAX_CANDIDATES = 3
 DEFAULT_UNVERIFIED = "本页信息来自公开材料，未取得当事方书面确认；读者请以原始链接为准。"
@@ -63,6 +63,7 @@ class ReportMeta:
     warnings: tuple[str, ...] = ()
     downgrade_reason: str = ""
     dropped_links: tuple[str, ...] = ()
+    llm_melon_suggestion: str = ""  # LLM 自评分与系统确定性值的偏差（仅记录，不生效）
 
     @property
     def degraded(self) -> bool:
@@ -239,22 +240,35 @@ def payload_is_cited(payload: dict[str, Any], allowed: set[str]) -> bool:
 
 
 def resolve_melon(llm_score: Any, deterministic: MelonScore, llm_reasons: list[Any]) -> MelonScore:
-    """数值优先采用 LLM（合法区间内），并始终附带系统确定性依据。"""
-    coerced = coerce_melon_score(llm_score)
-    if coerced is None:
-        return deterministic
-    extras = [str(r).strip() for r in llm_reasons if str(r).strip()][:4]
-    reasons = tuple(extras) + tuple(f"系统依据：{r}" for r in deterministic.reasons[:2])
-    level = level_for(coerced)
-    from .melons import LEVEL_EMOJI
+    """指数**只取确定性结果**；LLM 分数仅作对照记录，正文附其补充理由。
 
+    README / prompts / melons 三处都承诺「指数由系统确定性计算，LLM 只能补充理由、不能改数值」，
+    所以这里绝不采用 LLM 数值；给出偏差时在理由里如实披露，避免幻觉改公开数值。
+    """
+    extras = [str(r).strip() for r in llm_reasons if str(r).strip()][:4]
+    reasons = [*extras, *deterministic.reasons]
+    coerced = coerce_melon_score(llm_score)
+    if coerced is not None and coerced != deterministic.score:
+        reasons.insert(
+            0,
+            f"LLM 曾建议 {coerced}/100，与系统确定性计算 {deterministic.score}/100 不一致，"
+            "已按规则忽略（指数不可由 LLM 改写）",
+        )
     return MelonScore(
-        score=coerced,
-        level=level,
-        emoji=LEVEL_EMOJI[level],
-        reasons=reasons,
+        score=deterministic.score,
+        level=deterministic.level,
+        emoji=deterministic.emoji,
+        reasons=tuple(reasons),
         breakdown=deterministic.breakdown,
     )
+
+
+def melon_suggestion(llm_score: Any, deterministic: MelonScore) -> str:
+    """把 LLM 建议值与偏差写成 meta 字段（空串表示 LLM 未给分或与系统一致）。"""
+    coerced = coerce_melon_score(llm_score)
+    if coerced is None or coerced == deterministic.score:
+        return ""
+    return f"{coerced}/100（偏差 {coerced - deterministic.score:+d}，已忽略）"
 
 
 def _to_candidates(breakdowns: list[Any]) -> tuple[Candidate, ...]:
@@ -328,9 +342,8 @@ def build_report(
     unverified = tuple(clean.get("unverified") or []) or (DEFAULT_UNVERIFIED,)
     headline = mask_personal(clean.get("headline") or "") or primary.short_text(40)
     summary = mask_personal(clean.get("summary") or "") or primary.short_text(200)
-    final_melon = resolve_melon(
-        _payload_score(payload), deterministic, clean.get("melon_reasons") or []
-    )
+    llm_score = _payload_score(payload)
+    final_melon = resolve_melon(llm_score, deterministic, clean.get("melon_reasons") or [])
 
     return GuaReport(
         date=date,
@@ -351,17 +364,18 @@ def build_report(
             sources_used=base_meta.sources_used,
             warnings=base_meta.warnings,
             dropped_links=tuple(dropped[:10]),
+            llm_melon_suggestion=melon_suggestion(llm_score, deterministic),
         ),
         primary=primary,
     )
 
 
 def _payload_score(payload: dict[str, Any]) -> Any:
-    """兼容 ``melon_score`` 直给与 ``melon_index: {score}`` 两种形状。"""
-    if "melon_score" in payload:
-        return payload.get("melon_score")
+    """LLM 自评分（只作偏差对照，绝不参与公开指数）。"""
     index = payload.get("melon_index")
-    return index.get("score") if isinstance(index, dict) else None
+    if isinstance(index, dict) and "score" in index:
+        return index.get("score")
+    return payload.get("llm_melon_score")
 
 
 def _source_title(url: str, primary: Post, evidence: list[Post]) -> str:
