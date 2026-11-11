@@ -278,9 +278,9 @@ def test_from_issue_skips_repeat_receipt_when_label_event_refires(
     def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
         if method == "GET" and url.endswith("/labels?per_page=100"):
             return 200, json.dumps([{"name": "gua-submit"}, {"name": "gua-accepted"}]).encode()
-        if method == "GET" and url.endswith("/issues/42"):
+        if method == "GET" and url.endswith("/issues/42/comments?per_page=100"):
             return 200, json.dumps(
-                {"number": 42, "labels": [{"name": "gua-submit"}, {"name": "gua-accepted"}]}
+                [{"id": 7, "body": f"🍉 投瓜核查回执\n\n| {SEED_URL} | ✅ | X 帖 |"}]
             ).encode()
         if method == "POST" and url.endswith("/issues/42/comments"):
             posted.append(json.loads(data.decode()) if data else {})
@@ -295,32 +295,45 @@ def test_from_issue_skips_repeat_receipt_when_label_event_refires(
     code = from_issue.run(["--event", str(event_file)])
     assert code == 0
     payload = _output(capsys)
-    assert "已回执" in payload["skipped"]
+    assert "回执" in payload["skipped"]
     assert posted == []  # 未重复回执
 
 
-def test_from_issue_receipt_guard_detects_existing_receipt_comment(
+def test_from_issue_processes_new_link_added_after_receipt(
     workspace, monkeypatch, capsys, mirror_payload
 ):
+    """用户在 Issue 里补了新链接：不能被旧回执永久挡住，要发增量回执。"""
     monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
     monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
     event_file = workspace / "event.json"
     event_file.write_text(
         json.dumps(
-            {"issue": {"number": 43, "title": "投瓜", "body": f"### 瓜链接\n\n{SEED_URL}"}}
+            {
+                "issue": {
+                    "number": 44,
+                    "title": "投瓜",
+                    "body": f"### 瓜链接\n\n{SEED_URL}\n\n补充 https://example.com/news/1",
+                }
+            }
         ),
         encoding="utf-8",
     )
+    posted: list[dict] = []
 
     def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
         if method == "GET" and url.endswith("/labels?per_page=100"):
             return 200, json.dumps([{"name": "gua-submit"}, {"name": "gua-accepted"}]).encode()
-        if method == "GET" and url.endswith("/issues/43"):
-            return 200, json.dumps({"number": 43, "labels": [{"name": "gua-submit"}]}).encode()
-        if method == "GET" and url.endswith("/issues/43/comments?per_page=100"):
-            return 200, json.dumps([{"id": 7, "body": "🍉 投瓜核查回执\n\n..."}]).encode()
-        if method == "POST" and url.endswith("/issues/43/comments"):
+        if method == "GET" and url.endswith("/issues/44/comments?per_page=100"):
+            return 200, json.dumps(
+                [{"id": 7, "body": f"🍉 投瓜核查回执\n\n| {SEED_URL} | ✅ | X 帖 |"}]
+            ).encode()
+        if method == "POST" and url.endswith("/issues/44/comments"):
+            posted.append(json.loads(data.decode()) if data else {})
             return 201, json.dumps({"id": 8}).encode()
+        if "api.fxtwitter.com" in url:
+            return json_route(mirror_payload)
+        if "example.com/news/1" in url:
+            return 200, b"<html><head><title>news</title></head></html>"
         return 404, b""
 
     monkeypatch.setattr(
@@ -330,7 +343,10 @@ def test_from_issue_receipt_guard_detects_existing_receipt_comment(
     )
     code = from_issue.run(["--event", str(event_file)])
     assert code == 0
-    assert "回执评论" in _output(capsys)["skipped"]
+    payload = _output(capsys)
+    assert "skipped" not in payload
+    assert len(posted) == 1
+    assert "example.com/news/1" in posted[0]["body"]
 
 
 def test_comment_agent_dry_run_offline(workspace, monkeypatch, capsys, mirror_payload):

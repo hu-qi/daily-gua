@@ -138,32 +138,24 @@ def render_receipt(checked: list[dict[str, Any]], *, added: int) -> str:
     return "\n".join(lines)
 
 
-def receipt_already_posted(client: GitHubClient, issue_number: int) -> str:
-    """重复事件检测：``label`` 改动会再次触发 workflow，不能重复回执。
+def receipt_covers(client: GitHubClient, issue_number: int, urls: list[str]) -> str:
+    """重复事件检测：``issues[labeled]`` 被自身打标再次触发时不能重复回执。
 
-    幂等键：①已挂 ``gua-accepted`` 标签；②Issue 下已存在投瓜回执评论。
+    幂等键是**回执内容**而不是「有没有回执」：只当已有回执覆盖了本次全部链接才跳过；
+    用户在 Issue 里补充了新链接时仍然处理（发增量回执），不会被旧回执永久挡住。
     """
-    try:
-        detail = client.get_issue(issue_number)
-    except HttpError as exc:
-        LOGGER.warning("读取 Issue #%s 失败，按未回执处理: %s", issue_number, exc)
+    if not urls:
         return ""
-    labels = {
-        str(item.get("name") or "").strip().lower()
-        for item in detail.get("labels") or []
-        if isinstance(item, dict)
-    }
-    if "gua-accepted" in labels:
-        return "该 Issue 已有 gua-accepted 标签（此前已回执）"
     try:
         comments = client.list_comments(issue_number)
-    except HttpError:
+    except HttpError as exc:
+        LOGGER.warning("读取 Issue #%s 评论失败，按未回执处理: %s", issue_number, exc)
         return ""
     for item in comments:
-        if RECEIPT_MARKER in str(item.get("body") or ""):
-            return "该 Issue 下已存在投瓜回执评论"
+        body = str(item.get("body") or "")
+        if RECEIPT_MARKER in body and all(url in body for url in urls):
+            return "该 Issue 下已存在覆盖本次链接的投瓜回执，跳过重复回执"
     return ""
-
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -204,17 +196,19 @@ def run(argv: list[str] | None = None) -> int:
             body = str(detail.get("body") or "")
             title = str(detail.get("title") or "")
 
-    if issue_number and client.available and not args.dry_run:
-        duplicate = receipt_already_posted(client, issue_number)
-        if duplicate:
-            return emit({"ok": True, "issue": issue_number, "skipped": duplicate})
-
     urls = extract_urls(body)
     if not urls:
         receipt = render_receipt([], added=0)
         if not args.dry_run and issue_number and client.available:
             client.comment(issue_number, receipt)
         return emit({"ok": False, "issue": issue_number, "reason": "未找到链接", "receipt": receipt})
+
+    if issue_number and client.available and not args.dry_run:
+        duplicate = receipt_covers(client, issue_number, urls)
+        if duplicate:
+            return emit(
+                {"ok": True, "issue": issue_number, "urls": urls, "skipped": duplicate}
+            )
 
     checked = [check_url(url, http, mirror_base=settings.mirror_base) for url in urls]
     accepted = [item for item in checked if item.get("ok") and item.get("kind") == "x"]

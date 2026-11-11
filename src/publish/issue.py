@@ -212,9 +212,8 @@ class GitHubClient:
         try:
             data = self._post(self._url(f"/issues/{number}/labels"), {"labels": usable})
         except HttpError as exc:
-            if exc.status != 422:
-                raise
-            self.warn(f"Issue #{number} 打标签被拒绝（422: {exc}），已跳过标签")
+            # 打标签是 best-effort：任何失败都只告警，绝不中断回执/出报主链路
+            self.warn(f"Issue #{number} 打标签失败（{exc}），已跳过标签")
             return []
         return [item for item in data if isinstance(item, dict)] if isinstance(data, list) else []
 

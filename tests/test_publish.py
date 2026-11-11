@@ -253,12 +253,13 @@ def test_add_labels_does_not_raise_when_label_missing():
     assert client.drain_warnings() == []
 
 
-def test_add_labels_skips_when_label_creation_fails():
+@pytest.mark.parametrize("status", [403, 404, 422])
+def test_add_labels_skips_when_label_creation_fails(status):
     def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
         if method == "GET" and "/labels" in url:
-            return 403, b'{"message":"Resource not accessible"}'
-        if method == "POST" and url.endswith("/labels"):
-            return 403, b'{"message":"Resource not accessible"}'
+            return 200, json.dumps([{"name": "bug"}]).encode()
+        if method == "POST":
+            return status, b'{"message":"nope"}'
         return 404, b""
 
     client = GitHubClient(
@@ -267,7 +268,7 @@ def test_add_labels_skips_when_label_creation_fails():
         repository="o/r",
     )
     assert client.add_labels(7, ["gua-accepted"]) == []
-    assert any("创建失败" in warning for warning in client.drain_warnings())
+    assert any("失败" in warning for warning in client.drain_warnings())
 
 
 def test_ensure_issue_is_idempotent_by_title():
