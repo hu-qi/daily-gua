@@ -358,6 +358,19 @@ def test_markdown_to_html_renders_core_elements():
     assert '<a href="https://x.com/a">链</a>' in html
 
 
+def test_markdown_to_html_escapes_link_query_once():
+    """带 & 的链接不得二次转义成 &amp;amp;（Pages 上点击会失效）。"""
+    html = markdown_to_html("[参考](https://example.com/a?b=1&c=2)")
+    assert 'href="https://example.com/a?b=1&amp;c=2"' in html
+    assert "&amp;amp;" not in html
+
+
+def test_markdown_to_html_escapes_link_text_once():
+    html = markdown_to_html("[A & B](https://example.com/x)")
+    assert "A &amp; B" in html
+    assert "&amp;amp;" not in html
+
+
 def test_markdown_to_html_escapes_scripts():
     html = markdown_to_html('<script>alert("x")</script>')
     assert "<script>" not in html

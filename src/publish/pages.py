@@ -32,11 +32,19 @@ a{color:#0b66c3}.meta{color:#666;font-size:.9rem}ul{padding-left:1.3rem}
 
 
 def _inline(text: str) -> str:
+    """行内语法：先整体 HTML 转义，再把链接文本换成 ``<a>``。
+
+    链接 URL 在整体转义后已变成 ``&amp;``，这里先 ``html.unescape`` 还原再转义一次，
+    避免带查询参数的链接被二次转义成 ``&amp;amp;`` 而在 Pages 上失效。
+    """
     escaped = html.escape(text)
     escaped = INLINE_CODE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
     escaped = BOLD.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
     escaped = LINK.sub(
-        lambda m: f'<a href="{html.escape(m.group(2), quote=True)}">{m.group(1)}</a>', escaped
+        lambda m: (
+            f'<a href="{html.escape(html.unescape(m.group(2)), quote=True)}">{m.group(1)}</a>'
+        ),
+        escaped,
     )
     return escaped
 
