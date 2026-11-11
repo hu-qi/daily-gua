@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import html
+import ipaddress
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from ..common.http import HttpClient, HttpError
 
@@ -16,6 +18,43 @@ _OG_TITLE = re.compile(
 _OG_DESC = re.compile(
     r"""(?is)<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']"""
 )
+
+ALLOWED_SCHEMES = frozenset({"http", "https"})
+MAX_BODY_CHARS = 200_000  # 只解析头部元信息，超大页面截断后再匹配，避免无界读入
+BLOCKED_HOSTS = frozenset({"localhost", "localhost.localdomain", "ip6-localhost"})
+
+
+def url_problem(url: str) -> str:
+    """投瓜链接的静态安全校验：只允许 http/https、拒绝本机/私网/link-local 目标。
+
+    返回空串表示可探测；否则返回中文原因（供回执如实说明「已跳过」）。
+    """
+    try:
+        parts = urlsplit(str(url or "").strip())
+    except ValueError:
+        return "链接格式非法，已跳过"
+    scheme = (parts.scheme or "").lower()
+    if scheme not in ALLOWED_SCHEMES:
+        return f"仅支持 http/https 链接（收到 {scheme or '无 scheme'}），已跳过"
+    host = (parts.hostname or "").strip().lower()
+    if not host:
+        return "链接缺少主机名，已跳过"
+    if host in BLOCKED_HOSTS or host.endswith(".localhost"):
+        return "本机地址不在采集范围，已跳过"
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return ""
+    if (
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_multicast
+        or address.is_reserved
+        or address.is_unspecified
+    ):
+        return "私网/链路本地地址不在采集范围，已跳过"
+    return ""
 
 
 @dataclass(frozen=True)
@@ -58,11 +97,14 @@ class WebProbe:
         self._http = http
 
     def fetch(self, url: str) -> WebDoc:
+        problem = url_problem(url)
+        if problem:
+            return WebDoc(url=url, title="", description="", ok=False, note=problem)
         try:
             raw = self._http.get_text(url, {"Accept": "text/html, */*"})
         except HttpError as exc:
             return WebDoc(url=url, title="", description="", ok=False, note=str(exc))
-        doc = parse_html_document(raw, url=url)
+        doc = parse_html_document(raw[:MAX_BODY_CHARS], url=url)
         return doc
 
 

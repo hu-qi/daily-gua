@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import pytest
+from src.collect import web
 from src.collect.rss import FeedSpec, RssCollector, parse_feed
 from src.collect.service import collect
-from src.collect.web import parse_html_document
+from src.collect.web import MAX_BODY_CHARS, WebProbe, parse_html_document, url_problem
 from src.collect.x_mirror import is_x_status_url, post_from_mirror_payload
 from src.common.config import Settings
 from src.common.http import HttpClient
@@ -98,6 +100,55 @@ def test_parse_html_document_extracts_meta():
     assert doc.ok
     assert doc.title == "标题 | 站点"
     assert doc.description == "一段摘要"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "ftp://example.com/x",
+        "gopher://example.com/1",
+        "javascript:alert(1)",
+        "http://127.0.0.1/admin",
+        "http://10.0.0.5/",
+        "http://192.168.1.10/",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://[::1]/",
+        "http://localhost:8080/",
+        "http://metadata.google.internal.localhost/",
+        "http:///nohost",
+    ],
+)
+def test_url_problem_rejects_unsafe_targets(url):
+    """投瓜链接来自用户输入：只允许 http/https，拒绝本机/私网/link-local。"""
+    assert url_problem(url) != ""
+
+
+def test_url_problem_accepts_public_http_links():
+    assert url_problem("https://example.com/news/1") == ""
+    assert url_problem("http://x.com/a/status/1") == ""
+
+
+def test_web_probe_skips_unsafe_url_without_network():
+    transport = FakeTransport()
+    doc = WebProbe(_client(transport)).fetch("file:///etc/passwd")
+    assert doc.ok is False
+    assert "http" in doc.note
+    assert transport.call_count == 0  # 未发起任何请求
+
+
+def test_web_probe_truncates_huge_body(monkeypatch):
+    captured: dict[str, int] = {}
+
+    def fake_parse(raw, *, url):  # noqa: ANN001 - 替身
+        captured["length"] = len(raw)
+        return web.WebDoc(url=url, title="t", description="", ok=True)
+
+    monkeypatch.setattr(web, "parse_html_document", fake_parse)
+    transport = FakeTransport(routes={"https://blog.example": (200, b"x" * (MAX_BODY_CHARS + 5000))})
+    doc = WebProbe(_client(transport)).fetch("https://blog.example/post")
+    assert doc.ok is True
+    assert captured["length"] == MAX_BODY_CHARS
 
 
 def test_collect_falls_back_when_credentials_missing(mirror_payload):

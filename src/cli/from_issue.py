@@ -17,12 +17,14 @@ from ..collect.web import WebProbe
 from ..collect.x_mirror import XMirrorCollector, is_x_status_url
 from ..common.config import load_settings
 from ..common.http import HttpClient, HttpError
-from ..common.redaction import setup_logging
+from ..common.redaction import get_logger, setup_logging
 from ..publish.issue import GitHubClient
 from .env import emit, fail, load_dotenv, load_event
 
+LOGGER = get_logger(__name__)
 URL_RE = re.compile(r"https?://[^\s)\]\"'<>]+")
 MAX_SEEDS_PER_ISSUE = 5
+RECEIPT_MARKER = "🍉 投瓜核查回执"
 
 
 def extract_urls(text: str, *, limit: int = MAX_SEEDS_PER_ISSUE) -> list[str]:
@@ -95,7 +97,7 @@ def check_url(url: str, http: HttpClient, *, mirror_base: str) -> dict[str, Any]
 
 
 def render_receipt(checked: list[dict[str, Any]], *, added: int) -> str:
-    lines = ["🍉 投瓜核查回执", ""]
+    lines = [RECEIPT_MARKER, ""]
     if not checked:
         lines.extend(["未在 Issue 正文里找到链接，请按模板填写「瓜链接」后重试。", ""])
         return "\n".join(lines)
@@ -136,6 +138,34 @@ def render_receipt(checked: list[dict[str, Any]], *, added: int) -> str:
     return "\n".join(lines)
 
 
+def receipt_already_posted(client: GitHubClient, issue_number: int) -> str:
+    """重复事件检测：``label`` 改动会再次触发 workflow，不能重复回执。
+
+    幂等键：①已挂 ``gua-accepted`` 标签；②Issue 下已存在投瓜回执评论。
+    """
+    try:
+        detail = client.get_issue(issue_number)
+    except HttpError as exc:
+        LOGGER.warning("读取 Issue #%s 失败，按未回执处理: %s", issue_number, exc)
+        return ""
+    labels = {
+        str(item.get("name") or "").strip().lower()
+        for item in detail.get("labels") or []
+        if isinstance(item, dict)
+    }
+    if "gua-accepted" in labels:
+        return "该 Issue 已有 gua-accepted 标签（此前已回执）"
+    try:
+        comments = client.list_comments(issue_number)
+    except HttpError:
+        return ""
+    for item in comments:
+        if RECEIPT_MARKER in str(item.get("body") or ""):
+            return "该 Issue 下已存在投瓜回执评论"
+    return ""
+
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="处理投瓜 Issue，回帖并写入候选池")
     parser.add_argument("--issue", type=int, default=0, help="Issue 编号（默认取事件载荷）")
@@ -173,6 +203,11 @@ def run(argv: list[str] | None = None) -> int:
             detail = client.get_issue(issue_number)
             body = str(detail.get("body") or "")
             title = str(detail.get("title") or "")
+
+    if issue_number and client.available and not args.dry_run:
+        duplicate = receipt_already_posted(client, issue_number)
+        if duplicate:
+            return emit({"ok": True, "issue": issue_number, "skipped": duplicate})
 
     urls = extract_urls(body)
     if not urls:

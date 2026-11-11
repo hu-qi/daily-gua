@@ -260,6 +260,79 @@ def test_from_issue_run_dry_run(workspace, monkeypatch, capsys, mirror_payload):
     assert not (workspace / "state" / "candidates.json").exists()
 
 
+def test_from_issue_skips_repeat_receipt_when_label_event_refires(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """issues: [opened, labeled] + 自身 add_labels 会重复触发，必须按已回执提前返回。"""
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    event_file = workspace / "event.json"
+    event_file.write_text(
+        json.dumps(
+            {"issue": {"number": 42, "title": "投瓜", "body": f"### 瓜链接\n\n{SEED_URL}"}}
+        ),
+        encoding="utf-8",
+    )
+    posted: list[dict] = []
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "GET" and url.endswith("/labels?per_page=100"):
+            return 200, json.dumps([{"name": "gua-submit"}, {"name": "gua-accepted"}]).encode()
+        if method == "GET" and url.endswith("/issues/42"):
+            return 200, json.dumps(
+                {"number": 42, "labels": [{"name": "gua-submit"}, {"name": "gua-accepted"}]}
+            ).encode()
+        if method == "POST" and url.endswith("/issues/42/comments"):
+            posted.append(json.loads(data.decode()) if data else {})
+            return 201, json.dumps({"id": 1}).encode()
+        return 404, b""
+
+    monkeypatch.setattr(
+        from_issue,
+        "HttpClient",
+        lambda **kwargs: RealHttpClient(transport=transport, retries=0, sleep=lambda _: None),
+    )
+    code = from_issue.run(["--event", str(event_file)])
+    assert code == 0
+    payload = _output(capsys)
+    assert "已回执" in payload["skipped"]
+    assert posted == []  # 未重复回执
+
+
+def test_from_issue_receipt_guard_detects_existing_receipt_comment(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    event_file = workspace / "event.json"
+    event_file.write_text(
+        json.dumps(
+            {"issue": {"number": 43, "title": "投瓜", "body": f"### 瓜链接\n\n{SEED_URL}"}}
+        ),
+        encoding="utf-8",
+    )
+
+    def transport(method, url, headers, data, timeout):  # noqa: ANN001 - 传输层协议
+        if method == "GET" and url.endswith("/labels?per_page=100"):
+            return 200, json.dumps([{"name": "gua-submit"}, {"name": "gua-accepted"}]).encode()
+        if method == "GET" and url.endswith("/issues/43"):
+            return 200, json.dumps({"number": 43, "labels": [{"name": "gua-submit"}]}).encode()
+        if method == "GET" and url.endswith("/issues/43/comments?per_page=100"):
+            return 200, json.dumps([{"id": 7, "body": "🍉 投瓜核查回执\n\n..."}]).encode()
+        if method == "POST" and url.endswith("/issues/43/comments"):
+            return 201, json.dumps({"id": 8}).encode()
+        return 404, b""
+
+    monkeypatch.setattr(
+        from_issue,
+        "HttpClient",
+        lambda **kwargs: RealHttpClient(transport=transport, retries=0, sleep=lambda _: None),
+    )
+    code = from_issue.run(["--event", str(event_file)])
+    assert code == 0
+    assert "回执评论" in _output(capsys)["skipped"]
+
+
 def test_comment_agent_dry_run_offline(workspace, monkeypatch, capsys, mirror_payload):
     (workspace / "gua").mkdir()
     (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")

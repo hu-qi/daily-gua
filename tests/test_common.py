@@ -149,3 +149,45 @@ def test_mask_personal_redacts_contacts():
     assert "a@b.com" not in masked
     assert "110101199003071234" not in masked
     assert "138****5678" in masked
+
+def test_transport_rejects_oversized_response(monkeypatch):
+    """响应体有上限：超出即报错，绝不无界读入内存。"""
+    from src.common import http as http_module
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):  # noqa: ANN001 - 上下文协议
+            return False
+
+        def read(self, n=-1):  # noqa: ANN001
+            return b"x" * (n if n and n > 0 else 1024)
+
+    monkeypatch.setattr(http_module.urllib.request, "urlopen", lambda *a, **k: FakeResponse())
+    with pytest.raises(HttpError) as excinfo:
+        http_module.urllib_transport("GET", "https://example.com/huge", {}, None, 5)
+    assert "上限" in str(excinfo.value)
+
+
+def test_transport_returns_body_under_limit(monkeypatch):
+    from src.common import http as http_module
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):  # noqa: ANN001 - 上下文协议
+            return False
+
+        def read(self, n=-1):  # noqa: ANN001
+            return b'{"ok":true}'
+
+    monkeypatch.setattr(http_module.urllib.request, "urlopen", lambda *a, **k: FakeResponse())
+    status, body = http_module.urllib_transport("GET", "https://example.com/x", {}, None, 5)
+    assert status == 200 and body == b'{"ok":true}'
+

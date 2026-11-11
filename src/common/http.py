@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 RETRY_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
+MAX_RESPONSE_BYTES = 5 * 1024 * 1024  # 单次响应体上限：超出即报错，避免无界读入内存
 
 Transport = Callable[[str, str, Mapping[str, str], bytes | None, float], tuple[int, bytes]]
 
@@ -40,7 +41,13 @@ def urllib_transport(
         request.add_header(key, value)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - 仅 http(s)
-            return int(response.status), response.read()
+            raw = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(raw) > MAX_RESPONSE_BYTES:
+                raise HttpError(
+                    f"响应体超过 {MAX_RESPONSE_BYTES} 字节上限，已中止（防止无界读入）",
+                    url=url,
+                )
+            return int(response.status), raw
     except urllib.error.HTTPError as exc:  # 4xx/5xx 也要读 body 便于诊断
         return int(exc.code), exc.read()
 
