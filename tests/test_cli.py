@@ -1,0 +1,300 @@
+"""端到端（全部离线）：daily / from_issue / comment_agent / x_share / pages 五条 CLI 链路。"""
+
+from __future__ import annotations
+
+import json
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import pytest
+from src.cli import comment_agent, daily, from_issue, pages, x_share
+from src.common.http import HttpClient
+from tests.conftest import SEED_URL, FakeTransport, json_route
+
+GOOD_PAYLOAD = {
+    "headline": "AI 圈互撕：博主称被大号爆锤",
+    "summary": f"发帖人称某知名 AI 博主被大号爆锤，原文见 {SEED_URL}。",
+    "timeline": [{"time": "2026-11-11T02:02:48Z", "event": "原帖发布", "link": SEED_URL}],
+    "quotes": [{"author": "cxuan", "text": "某知名 AI 博主被大号给爆锤了", "link": SEED_URL}],
+    "stances": [{"side": "发帖人", "stance": "称对方被爆锤", "link": SEED_URL}],
+    "unverified": ["被指对象未在正文中点名"],
+    "melon_reasons": ["回复与引用高于点赞"],
+    "sources": [SEED_URL],
+}
+
+REPORT = """---
+date: "2026-11-11"
+title: "🍉 每日一瓜 2026-11-11"
+headline: "AI 圈互撕"
+melon_score: 74
+melon_level: "热"
+generated_by: "llm"
+primary_url: "https://x.com/criscxuan/status/2120336410989433287"
+sources:
+  - "https://x.com/criscxuan/status/2120336410989433287"
+---
+
+## ⚠️ 未证实 / 待核实
+
+- 被爆锤对象未点名
+"""
+
+README = """# 项目
+
+说明文字。
+
+<!-- GUA:INDEX:START -->
+旧的索引
+<!-- GUA:INDEX:END -->
+
+尾部内容
+"""
+
+
+@pytest.fixture()
+def workspace(monkeypatch, tmp_path):
+    """离线工作区：env 指向临时目录、无凭据、README 含索引标记。"""
+    for key in ("LLM_API_KEY", "LLM_BASE_URL", "GITHUB_TOKEN", "X_BEARER_TOKEN", "SITE_URL"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("GUA_DIR", str(tmp_path / "gua"))
+    monkeypatch.setenv("GUA_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("SEED_URLS", SEED_URL)
+    monkeypatch.setenv("RSS_FEEDS", "https://feed.example/rss")
+    monkeypatch.setenv("SITE_URL", "https://o.github.io/r")
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "README.md").write_text(README, encoding="utf-8")
+    return tmp_path
+
+
+def _patch_transport(monkeypatch, module, transport: FakeTransport) -> None:
+    monkeypatch.setattr(
+        module,
+        "HttpClient",
+        lambda **kwargs: HttpClient(transport=transport, retries=0, sleep=lambda _: None),
+    )
+
+
+def _mirror_transport(payload: dict, *, rss: str = "", extra: dict | None = None) -> FakeTransport:
+    routes: dict = {"https://api.fxtwitter.com": json_route(payload)}
+    if rss:
+        routes["https://feed.example"] = (200, rss.encode())
+    routes.update(extra or {})
+    return FakeTransport(routes=routes)
+
+
+def _output(capsys) -> dict:
+    out = capsys.readouterr().out
+    return json.loads(out[out.index("{") :])
+
+
+def test_daily_produces_report_without_credentials(workspace, monkeypatch, capsys, mirror_payload):
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
+    code = daily.run(["--date", "2026-11-11"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["ok"] is True
+    assert payload["generated_by"] == "degraded"
+    assert payload["issue"].get("skipped")  # GitHub 未配置 → 明确跳过
+    assert payload["melon"]["score"] > 0
+
+    report = (workspace / "gua" / "2026-11-11.md").read_text(encoding="utf-8")
+    assert SEED_URL in report
+    assert "## ⚠️ 未证实" in report
+    assert "## 吃瓜指数" in report
+    assert "## 一句话摘瓜" in report
+
+    readme = (workspace / "README.md").read_text(encoding="utf-8")
+    assert "旧的索引" not in readme
+    assert "2026-11-11" in readme
+    assert "尾部内容" in readme
+
+    feed = (workspace / "feed.xml").read_text(encoding="utf-8")
+    root = ET.fromstring(feed)
+    assert root.find("channel").findall("item")
+
+    state = json.loads((workspace / "state" / "snapshots.json").read_text(encoding="utf-8"))
+    assert state["posts"]
+
+
+def test_daily_with_llm_generates_narrative(workspace, monkeypatch, capsys, mirror_payload):
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm.example/v1")
+    monkeypatch.setenv("LLM_API_KEY", "llm-key-for-test")
+
+    class StubLLMClient:
+        def __init__(self, settings, http=None, *, budget=None):  # noqa: ANN001
+            self.available = True
+
+        def complete(self, messages, *, max_tokens=None, temperature=None):  # noqa: ANN001
+            return json.dumps(GOOD_PAYLOAD, ensure_ascii=False)
+
+    monkeypatch.setattr("src.agent.generate.LLMClient", StubLLMClient)
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
+
+    code = daily.run(["--date", "2026-11-11"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["generated_by"] == "llm"
+    report = (workspace / "gua" / "2026-11-11.md").read_text(encoding="utf-8")
+    assert "AI 圈互撕" in report
+    assert "被指对象未在正文中点名" in report
+
+
+def test_daily_creates_issue_when_github_configured(workspace, monkeypatch, capsys, mirror_payload):
+    monkeypatch.setenv("GITHUB_TOKEN", "gh-test-token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    transport = _mirror_transport(
+        mirror_payload,
+        extra={
+            "GET https://api.github.com/search/issues": json_route({"items": []}),
+            "POST https://api.github.com/repos/o/r/issues": json_route(
+                {"number": 7, "html_url": "https://github.com/o/r/issues/7"}
+            ),
+        },
+    )
+    _patch_transport(monkeypatch, daily, transport)
+
+    code = daily.run(["--date", "2026-11-11", "--no-llm"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["issue"]["number"] == 7
+    assert payload["issue"]["created"] is True
+
+
+def test_daily_dry_run_writes_nothing(workspace, monkeypatch, capsys, mirror_payload):
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
+    code = daily.run(["--date", "2026-11-11", "--dry-run"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["report_file"] is None
+    assert not (workspace / "gua").exists()
+
+
+def test_daily_exits_2_when_all_channels_fail(workspace, monkeypatch, capsys):
+    _patch_transport(monkeypatch, daily, FakeTransport(default=(500, b"boom")))
+    code = daily.run(["--date", "2026-11-11"])
+    assert code == 2
+    payload = _output(capsys)
+    assert payload["ok"] is False
+
+
+def test_from_issue_extracts_urls_and_dedupes():
+    body = (
+        "### 瓜链接\n\nhttps://x.com/criscxuan/status/2120336410989433287\n"
+        "另一个 https://example.com/post/1。\n"
+        "重复 https://x.com/criscxuan/status/2120336410989433287"
+    )
+    urls = from_issue.extract_urls(body)
+    assert urls == [SEED_URL, "https://example.com/post/1"]
+
+
+def test_from_issue_candidate_pool_dedupes(workspace):
+    added = from_issue.add_candidates(
+        str(workspace / "state"), [{"url": SEED_URL, "author": "cxuan"}]
+    )
+    assert added == 1
+    again = from_issue.add_candidates(
+        str(workspace / "state"), [{"url": SEED_URL, "author": "cxuan"}]
+    )
+    assert again == 0
+
+
+def test_from_issue_render_receipt_marks_unreachable():
+    receipt = from_issue.render_receipt(
+        [{"url": "https://x.com/a/status/1", "ok": False, "kind": "x", "note": "404"}], added=0
+    )
+    assert "❌" in receipt
+    assert "404" in receipt
+
+
+def test_from_issue_run_dry_run(workspace, monkeypatch, capsys, mirror_payload):
+    _patch_transport(monkeypatch, from_issue, _mirror_transport(mirror_payload))
+    event_file = workspace / "event.json"
+    event_file.write_text(
+        json.dumps(
+            {
+                "issue": {
+                    "number": 42,
+                    "title": "投瓜",
+                    "body": f"### 瓜链接\n\n{SEED_URL}",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    code = from_issue.run(["--event", str(event_file), "--dry-run"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["checked"][0]["ok"] is True
+    assert payload["added"] == 0  # dry-run 不写候选池
+    assert not (workspace / "state" / "candidates.json").exists()
+
+
+def test_comment_agent_dry_run_offline(workspace, monkeypatch, capsys, mirror_payload):
+    (workspace / "gua").mkdir()
+    (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")
+    _patch_transport(monkeypatch, comment_agent, _mirror_transport(mirror_payload))
+
+    for body in ("/more", "/fact-check", "/vote 🍉"):
+        code = comment_agent.run(["--issue", "1", "--comment-id", "9", "--body", body, "--dry-run"])
+        assert code == 0
+        payload = _output(capsys)
+        assert payload["command"] in {"more", "fact-check", "vote"}
+        assert len(payload["reply"]) > 20
+
+
+def test_comment_agent_idempotency_state(workspace):
+    state_dir = str(workspace / "state")
+    assert comment_agent.is_handled(state_dir, 123) is False
+    comment_agent.mark_handled(state_dir, 123, command="more", issue=1)
+    assert comment_agent.is_handled(state_dir, 123) is True
+
+
+def test_comment_agent_skips_non_command(workspace, capsys):
+    code = comment_agent.run(["--issue", "1", "--comment-id", "5", "--body", "只是围观"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload.get("skipped")
+
+
+def test_comment_agent_skips_bot_comments(workspace, capsys):
+    code = comment_agent.run(
+        ["--issue", "1", "--comment-id", "6", "--body", "/vote 🍉", "--author", "grapedev-bot"]
+    )
+    assert code == 0
+    payload = _output(capsys)
+    assert payload.get("skipped")
+
+
+def test_x_share_draft_dry_run(workspace, capsys):
+    (workspace / "gua").mkdir()
+    (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")
+    code = x_share.run(["--date", "2026-11-11", "--dry-run"])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["auto_posted"] is False
+    assert payload["intent_url"].startswith("https://x.com/intent/tweet?text=")
+    assert not (workspace / "dist").exists()
+
+
+def test_x_share_writes_draft(workspace, capsys):
+    (workspace / "gua").mkdir()
+    (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")
+    code = x_share.run(["--date", "2026-11-11"])
+    assert code == 0
+    payload = _output(capsys)
+    draft = Path(payload["draft"]).read_text(encoding="utf-8")
+    assert "不会自动发帖" in draft
+    assert "吃瓜指数 74" in draft
+    assert "gua/2026-11-11.md" in draft
+
+
+def test_pages_cli_builds_site(workspace, capsys):
+    (workspace / "gua").mkdir()
+    (workspace / "gua" / "2026-11-11.md").write_text(REPORT, encoding="utf-8")
+    code = pages.run([])
+    assert code == 0
+    payload = _output(capsys)
+    assert payload["count"] > 0
+    index = (workspace / "_site" / "index.html").read_text(encoding="utf-8")
+    assert "2026-11-11" in index
+    assert (workspace / "_site" / "gua" / "2026-11-11.html").is_file()
