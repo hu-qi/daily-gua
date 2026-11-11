@@ -23,6 +23,54 @@ VOTE_MELON = "🍉"
 VOTE_BAD = "🫠"
 SELF_MARKER = "每日一瓜"
 
+# 链接可达性探测的状态机：只有实测通过才是 ok，探测不出结果不得写成「可访问」。
+PROBE_OK = "ok"
+PROBE_UNREACHABLE = "unreachable"
+PROBE_TIMEOUT = "timeout"
+PROBE_SKIPPED = "skipped"
+MAX_PROBED_SOURCES = 5
+PROBE_STATE_TEXT = {
+    PROBE_OK: "✅ 可访问",
+    PROBE_UNREACHABLE: "❌ 不可访问",
+    PROBE_TIMEOUT: "⚠️ 探测超时/无法判定",
+    PROBE_SKIPPED: "未探测",
+}
+
+
+def _normalize_state(value: object) -> str:
+    """兼容 bool 与状态字符串（历史调用方传 True/False）。"""
+    if isinstance(value, bool):
+        return PROBE_OK if value else PROBE_UNREACHABLE
+    text = str(value or "").strip()
+    return text if text in PROBE_STATE_TEXT else PROBE_UNREACHABLE
+
+
+def probe_url(url: str, http: HttpClient) -> str:
+    """对单条链接做一次真实 HTTP 探测（GET 跟随，不解析内容）。
+
+    - 2xx/3xx → ``ok``；
+    - 4xx/5xx → ``unreachable``；
+    - 网络异常/超时（无状态码）→ ``timeout``，如实标注而**不**假定可访问。
+    """
+    try:
+        http.request("GET", url, headers={"Accept": "*/*"}, expect_json=False)
+    except HttpError as exc:
+        return PROBE_TIMEOUT if exc.status is None else PROBE_UNREACHABLE
+    return PROBE_OK
+
+
+def probe_sources(
+    urls: tuple[str, ...] | list[str], probe, *, limit: int = MAX_PROBED_SOURCES
+) -> dict[str, str]:
+    """逐条探测引用链接（去重、限条数）；探测函数抛错按不可访问处理。"""
+    states: dict[str, str] = {}
+    for url in list(dict.fromkeys(str(item) for item in urls if str(item).strip()))[:limit]:
+        try:
+            states[url] = _normalize_state(probe(url))
+        except Exception:  # noqa: BLE001 - 探测失败不阻断回帖
+            states[url] = PROBE_UNREACHABLE
+    return states
+
 
 @dataclass(frozen=True)
 class CommentCommand:
@@ -137,23 +185,36 @@ def render_more(
 def render_fact_check(
     report: ReportDigest,
     *,
-    reachable: dict[str, bool],
+    reachable: dict[str, object],
     current: Post | None,
     checked_at: datetime,
+    primary_state: str | None = None,
 ) -> str:
-    """``/fact-check``：把「未证实项」和「链接可达性」摊开给读者自查。"""
-    ok_primary = current is not None
+    """``/fact-check``：把「未证实项」和**实测**的链接可达性摊开给读者自查。"""
+    states = {url: _normalize_state(state) for url, state in (reachable or {}).items()}
+    if primary_state is None:
+        primary_state = PROBE_OK if current is not None else PROBE_UNREACHABLE
+    primary_state = _normalize_state(primary_state)
+
     lines = [f"证据核查 · {report.date}（核查时点 {checked_at.strftime('%Y-%m-%d %H:%M UTC')}）", ""]
     lines.extend(["| 核查项 | 结论 | 依据 |", "| --- | --- | --- |"])
     if report.primary_url:
-        status = "✅ 链接可访问" if ok_primary else "⚠️ 链接不可访问 / 需人工核对"
-        lines.append(f"| 主帖是否仍可访问 | {status} | {report.primary_url} |")
-    unreachable = [url for url, ok in reachable.items() if not ok]
-    if reachable:
         lines.append(
-            f"| 引用链接可达性 | {len(reachable) - len(unreachable)}/{len(reachable)} 可访问 | "
-            f"{', '.join(unreachable) if unreachable else '全部可访问'} |"
+            f"| 主帖是否仍可访问 | {PROBE_STATE_TEXT[primary_state]} | {report.primary_url} |"
         )
+    if states:
+        ok = sum(1 for state in states.values() if state == PROBE_OK)
+        bad = [(url, state) for url, state in states.items() if state != PROBE_OK]
+        detail = (
+            "全部可访问（逐条实测）"
+            if not bad
+            else "；".join(
+                f"{url} {PROBE_STATE_TEXT[state].split(' ', 1)[-1]}" for url, state in bad
+            )
+        )
+        lines.append(f"| 引用链接可达性 | {ok}/{len(states)} 可访问 | {detail} |")
+    else:
+        lines.append("| 引用链接可达性 | 未探测 | 本次无可核的引用链接 |")
     for item in report.unverified[:6]:
         lines.append(f"| {_short(item, 40)} | ⚠️ 未获独立来源证实 | {report.primary_url or '—'} |")
     lines.append("")
@@ -165,6 +226,8 @@ def render_fact_check(
     lines.extend(
         [
             "",
+            "可达性来自本次回复时点的 HTTP 探测（每条链接实测，最多 5 条）："
+            "「可访问」只表示链接能打开，不代表内容为真；探测超时如实标注为「无法判定」。",
             "核查原则：只有能指回原始链接的内容才算已核实；"
             "仅凭截图、转述或群聊截图的信息一律标注「未证实」。",
             "若你是当事人或持有直接证据，欢迎在本 Issue 补充链接，更正会置顶。",
@@ -208,10 +271,12 @@ class CommentAgent:
         http: HttpClient | None = None,
         mirror_base: str = "https://api.fxtwitter.com",
         fetch_post=None,
+        probe=None,
     ) -> None:
         self._http = http or HttpClient()
         self._mirror_base = mirror_base
         self._fetch_post = fetch_post
+        self._probe = probe
 
     def _latest(self, url: str) -> tuple[Post | None, str]:
         if not url or not is_x_status_url(url):
@@ -223,6 +288,11 @@ class CommentAgent:
             return collector.fetch_post(url), ""
         except HttpError as exc:
             return None, str(exc)
+
+    def _probe_state(self, url: str) -> str:
+        if self._probe is not None:
+            return _normalize_state(self._probe(url))
+        return probe_url(url, self._http)
 
     def handle(
         self,
@@ -245,12 +315,21 @@ class CommentAgent:
                 error=error,
             )
         if command.name == "fact-check":
-            latest, error = self._latest(report.primary_url)
-            reachable = dict.fromkeys(report.sources[:5], True)
-            if error:
-                reachable[report.primary_url or "primary"] = False
+            latest, _ = self._latest(report.primary_url)
+            if report.primary_url and is_x_status_url(report.primary_url):
+                # X 链接用镜像取数判断（取不到时区分「超时/不可达」）
+                primary_state = PROBE_OK if latest is not None else PROBE_UNREACHABLE
+            elif report.primary_url:
+                primary_state = self._probe_state(report.primary_url)
+            else:
+                primary_state = PROBE_SKIPPED
+            reachable = probe_sources(report.sources, self._probe_state)
             return render_fact_check(
-                report, reachable=reachable, current=latest, checked_at=moment
+                report,
+                reachable=reachable,
+                current=latest,
+                checked_at=moment,
+                primary_state=primary_state,
             )
         vote = parse_vote(command.argument)
         melon, bad = tally_votes(issue_comments)

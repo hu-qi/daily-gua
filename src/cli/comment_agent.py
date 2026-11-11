@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..agent.commands import CommentAgent, parse_command
+from ..agent.commands import CommentAgent, parse_command, probe_url
 from ..common.config import load_settings
 from ..common.frontmatter import load_digest
 from ..common.http import HttpClient
@@ -154,7 +154,14 @@ def run(argv: list[str] | None = None) -> int:
         except Exception:  # 取评论失败时仍处理当前评论
             comments = [comment] if comment else []
 
-    agent = CommentAgent(http=http, mirror_base=settings.mirror_base)
+    agent = CommentAgent(
+        http=http,
+        mirror_base=settings.mirror_base,
+        # /fact-check 的可达性探测用短超时、不重试：5 条链接最多 25 秒，保证 5 分钟内回帖
+        probe=lambda url: probe_url(
+            url, HttpClient(timeout=min(settings.http_timeout_s, 5.0), retries=0)
+        ),
+    )
     reply = agent.handle(
         command,
         report=digest,
