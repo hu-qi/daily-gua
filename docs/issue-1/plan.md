@@ -130,7 +130,8 @@ sources:
 
 | 项 | 由谁做 |
 | --- | --- |
-| 代码 / workflow / 模板 / README / 首篇瓜报 / CI | 本 PR |
+| 代码 / 模板 / README / 首篇瓜报 / CI 用例 | 本 PR |
+| workflow YAML 落库（`.github/workflows/`） | 维护者：凭据缺 `workflow` scope，内容见 PR 说明 |
 | Secrets（LLM、X） | 仓库维护者（Settings → Secrets） |
 | Actions 写权限、Pages 源 | 仓库维护者（Settings → Actions / Pages） |
 | 首次 `daily-gua` 手动验证 | 仓库维护者（或 QA 跑一次 `workflow_dispatch`） |

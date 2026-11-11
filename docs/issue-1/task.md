@@ -61,13 +61,13 @@
 - 验证：`tests/test_cli.py`（16 例离线 e2e）
 
 ## T8 workflows 与模板
-- [x] `daily-gua.yml`（cron + dispatch，提交回仓库，失败留痕）
-- [x] `gua-from-issue.yml`（opened/labeled + dispatch）
-- [x] `gua-comment-agent.yml`（issue_comment + dispatch，超时 5 分钟，幂等状态提交）
-- [x] `x-share.yml`（仅 dispatch，artifact）
-- [x] `pages.yml`（push + dispatch，deploy-pages）
-- [x] `ci.yml`（ruff + pytest）
-- [x] `.github/ISSUE_TEMPLATE/gua-submit.yml`、`correction.yml`、`config.yml`
+- [x] workflow 内容与校验：`daily-gua.yml`（cron + dispatch，提交回仓库，失败留痕）、`gua-from-issue.yml`、
+      `gua-comment-agent.yml`（超时 5 分钟 + 幂等状态）、`x-share.yml`、`pages.yml`、`ci.yml`；
+      全部 YAML 可解析、均含 `workflow_dispatch`
+- [ ] **待维护者添加**：平台 git 凭据缺少 GitHub `workflow` scope，`git push` 被 GitHub 拒绝
+      （`refusing to allow a Personal Access Token to create or update workflow`），
+      故本 PR 不含 `.github/workflows/`；文件全文见 PR 说明，网页端添加或换凭据即可
+- [x] `.github/ISSUE_TEMPLATE/gua-submit.yml`、`correction.yml`、`config.yml`（已随 PR 推送）
 - 验证：`python -c "import yaml,glob; [yaml.safe_load(open(p)) for p in glob.glob('.github/**/*.yml', recursive=True)]"`
 
 ## T9 文档与首篇瓜报
