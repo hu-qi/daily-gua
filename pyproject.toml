@@ -1,0 +1,33 @@
+[project]
+name = "daily-gua"
+version = "0.1.0"
+description = "每日一瓜：GitHub Actions + LLM Agent 自动整理当日科技/AI 圈热点"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+# 运行时零第三方依赖：只用 stdlib（urllib / xml.etree / json），Actions 里少一层安装失败风险
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "B011"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -1,0 +1,1 @@
+# 运行时零第三方依赖（全部标准库）。CI / 本地开发依赖见 requirements-dev.txt。
