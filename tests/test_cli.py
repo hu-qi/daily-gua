@@ -576,9 +576,7 @@ def test_daily_reuses_published_melon_with_visible_reason(
     assert len(again["posts"]) == 1
 
 
-def test_daily_default_seed_is_only_a_fallback(
-    workspace, monkeypatch, capsys, mirror_payload
-):
+def test_daily_default_seed_is_only_a_fallback(workspace, monkeypatch, capsys, mirror_payload):
     """未配置 SEED_URLS 时，默认固定种子不应在有 RSS 新内容的日子进入候选。"""
     monkeypatch.delenv("SEED_URLS", raising=False)
     _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload, rss=RSS_SAMPLE))
@@ -589,7 +587,9 @@ def test_daily_default_seed_is_only_a_fallback(
     assert _primary_url(report) == "https://example.com/posts/1"
 
 
-def test_daily_uses_default_seed_when_no_new_content(workspace, monkeypatch, capsys, mirror_payload):
+def test_daily_uses_default_seed_when_no_new_content(
+    workspace, monkeypatch, capsys, mirror_payload
+):
     """无候选池/采集新内容时，默认固定种子才作为兜底来源。"""
     monkeypatch.delenv("SEED_URLS", raising=False)
     _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
@@ -597,5 +597,7 @@ def test_daily_uses_default_seed_when_no_new_content(workspace, monkeypatch, cap
     assert daily.run(["--date", "2026-11-10"]) == 0
     payload = _output(capsys)
     assert payload["ok"] is True
-    assert _primary_url((workspace / "gua" / "2026-11-10.md").read_text(encoding="utf-8")) == SEED_URL
+    assert (
+        _primary_url((workspace / "gua" / "2026-11-10.md").read_text(encoding="utf-8")) == SEED_URL
+    )
     assert "seed:fallback" in payload["sources_used"]

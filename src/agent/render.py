@@ -67,6 +67,10 @@ def render_markdown(report: GuaReport) -> str:
     parts.append(f"> {report.headline}")
     parts.append("")
 
+    if report.meta.downgrade_reason:
+        parts.append(f"> **降级说明**：{report.meta.downgrade_reason}")
+        parts.append("")
+
     parts.extend(["## 一句话摘瓜", "", report.summary.strip() or "（暂无摘要）", ""])
     parts.extend(_melon_section(report))
 

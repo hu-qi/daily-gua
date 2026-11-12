@@ -10,7 +10,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from ..common.models import Metrics, Post, utc_now
+from ..common.models import Metrics, Post, canonical_url, utc_now
 from .snapshots import PostSnapshot, hours_between
 
 
@@ -191,14 +191,22 @@ def rank_posts(
     now: datetime | None = None,
     cfg: RankConfig | None = None,
     top_n: int = 3,
+    exclude_urls: set[str] | tuple[str, ...] | list[str] | None = None,
 ) -> RankedResult:
-    """按分数降序，返回 Top1 与 Top3 备选（同键去重，保留高分者）。"""
+    """按分数降序，返回 Top1 与 Top3 备选（同键去重，保留高分者）。
+
+    ``exclude_urls`` 为已发布 URL 集合（按 ``canonical_url`` 规范化比较），
+    打分前剔除，纯函数、默认不排除。
+    """
     config = cfg or RankConfig()
     moment = now or utc_now()
     snapshot_map = snapshots or {}
+    excluded = {canonical_url(url) for url in exclude_urls or ()}
     seen: dict[str, ScoreBreakdown] = {}
     for post in posts:
         if not _eligible(post, config):
+            continue
+        if post.url and canonical_url(post.url) in excluded:
             continue
         item = score_post(post, snapshot=snapshot_map.get(post.key), now=moment, cfg=config)
         current = seen.get(post.key)

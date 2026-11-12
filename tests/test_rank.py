@@ -13,7 +13,7 @@ from src.rank.snapshots import (
     prune_snapshots,
     save_snapshots,
 )
-from tests.conftest import FIXED_NOW, make_post
+from tests.conftest import FIXED_NOW, SEED_URL, make_post
 
 
 def test_fallback_growth_uses_age_when_no_snapshot(sample_post):

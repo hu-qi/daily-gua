@@ -14,7 +14,7 @@ from typing import Any
 
 from ..agent.generate import generate_report
 from ..agent.render import render_issue_body, render_markdown
-from ..collect.service import collect
+from ..collect.service import collect, collect_seed_posts, merge_results
 from ..common.config import Settings, load_settings, site_url
 from ..common.frontmatter import digest_from_text
 from ..common.http import HttpClient, HttpError
@@ -23,6 +23,7 @@ from ..publish.feed import FEED_FILE, render_feed
 from ..publish.issue import BUSINESS_LABELS, GitHubClient, issue_title
 from ..publish.readme import update_readme
 from ..publish.writer import list_reports, write_report
+from ..rank.published import load_published, published_urls, record_published
 from ..rank.scorer import RankedResult, rank_posts
 from ..rank.snapshots import load_snapshots, prune_snapshots, save_snapshots
 from .env import beijing_today, emit, load_dotenv, valid_date
@@ -75,34 +76,72 @@ def run(argv: list[str] | None = None) -> int:
     seeds.extend(_candidate_pool(state_dir))
     seeds = list(dict.fromkeys(seeds))
 
+    published_path = Path(state_dir) / "published.json"
+    published = load_published(published_path)
+    exclude_urls = published_urls(published)
+
     collected = collect(settings, http, seeds=tuple(seeds))
-    if not collected.posts:
-        return emit(
-            {
-                "ok": False,
-                "reason": "所有采集通道均无结果",
-                "warnings": collected.warnings,
-            },
-            exit_code=2,
-        )
+    all_posts = list(collected.posts)
+    sources = list(collected.sources)
+    warnings = list(collected.warnings)
 
     snapshot_path = Path(state_dir) / "snapshots.json"
     snapshots = prune_snapshots(load_snapshots(snapshot_path), now=now)
-    ranked: RankedResult = rank_posts(collected.posts, snapshots=snapshots, now=now)
+    ranked: RankedResult = rank_posts(
+        all_posts, snapshots=snapshots, now=now, exclude_urls=exclude_urls
+    )
+
+    # 兜底种子仅在「候选池 + 常规采集无新内容」时启用；已发布 URL 已在打分前排除。
+    if ranked.top1 is None and settings.fallback_seed_urls:
+        fallback = collect_seed_posts(settings, http, settings.fallback_seed_urls, fallback=True)
+        collected = merge_results([collected, fallback])
+        all_posts = list(collected.posts)
+        sources = list(collected.sources)
+        warnings = list(collected.warnings)
+        ranked = rank_posts(all_posts, snapshots=snapshots, now=now, exclude_urls=exclude_urls)
+
+    reuse_reason: str | None = None
     if ranked.top1 is None:
-        return emit({"ok": False, "reason": "没有可用候选（正文为空或互动不足）"}, exit_code=2)
+        # 全部候选均已发布：复用历史主瓜并显式标注，不 exit 2 静默失败。
+        reuse = rank_posts(all_posts, snapshots=snapshots, now=now)
+        if reuse.top1 is None:
+            if not all_posts:
+                return emit(
+                    {
+                        "ok": False,
+                        "reason": "所有采集通道均无结果",
+                        "warnings": warnings,
+                    },
+                    exit_code=2,
+                )
+            return emit(
+                {"ok": False, "reason": "没有可用候选（正文为空或互动不足）"},
+                exit_code=2,
+            )
+        ranked = reuse
+        reuse_reason = (
+            "候选池与采集均无新素材，所有候选均已发布，复用历史主瓜并显式标注（避免静默重复）"
+        )
+
+    if ranked.top1 is None:  # pragma: no cover - 防御性兜底
+        return emit({"ok": False, "reason": "没有可用候选"}, exit_code=2)
 
     primary = ranked.top1.post
     evidence = [item.post for item in ranked.scored[: args.top]]
+    degrade_reasons: list[str] = []
+    if args.no_llm:
+        degrade_reasons.append("--no-llm 指定强制降级")
+    if reuse_reason:
+        degrade_reasons.append(reuse_reason)
     generated = generate_report(
         primary,
         evidence,
         ranked.candidates,
         date=date,
         settings=settings,
-        sources_used=tuple(collected.sources),
-        warnings=tuple(collected.warnings),
-        degrade_reason="--no-llm 指定强制降级" if args.no_llm else None,
+        sources_used=tuple(sources),
+        warnings=tuple(warnings),
+        degrade_reason="；".join(degrade_reasons) or None,
         now=now,
     )
     report = generated.report
@@ -113,7 +152,8 @@ def run(argv: list[str] | None = None) -> int:
         report_file = write_report(gua_dir, date, markdown)
         if not snapshot_path.parent.exists():
             snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-        save_snapshots(snapshot_path, collected.posts, now=now)
+        save_snapshots(snapshot_path, all_posts, now=now)
+        record_published(published_path, primary.url, date=date, now=now)
         digests = list_reports(gua_dir)
         readme_path = Path("README.md")
         if readme_path.is_file():
