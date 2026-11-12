@@ -82,7 +82,7 @@
 | 验收项 | 实现位置 | 验证方式 |
 | --- | --- | --- |
 | 分层就绪、无循环依赖 | `src/*` | `tests/test_*` + 依赖方向检查（publish 不 import agent） |
-| 5 个 workflow + dispatch | `.github/workflows/` | 逐个检查 `workflow_dispatch`；**推送受 GitHub `workflow` scope 限制，待维护者添加** |
+| 5 个 workflow + dispatch | `.github/workflows/` | 逐个检查 `workflow_dispatch`；六个 workflow 均已随 PR 推送，YAML 解析通过 |
 | Issue 模板 | `.github/ISSUE_TEMPLATE/` | 投瓜 / 更正两个表单 |
 | 首篇瓜报含 6 要素 | `gua/2026-11-11.md` | front matter + 小节断言 |
 | README 架构图 / Secrets / 本地运行 | `README.md` | 人读 + 命令可复制 |

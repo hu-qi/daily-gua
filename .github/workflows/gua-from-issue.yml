@@ -1,0 +1,64 @@
+name: gua-from-issue
+
+# 投瓜回执：Issue 打开或被打上 gua-submit 标签时，核查链接并回帖，通过者进入次日候选池。
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "投瓜 Issue 编号"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: gua-from-issue-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    # 仅处理挂了 gua-submit 标签的 Issue（手动触发不受限）
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'gua-submit')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 核查并回帖
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          INPUT_ISSUE: ${{ github.event.inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_ISSUE:-}" ]; then
+            python -m src.cli.from_issue --issue "$INPUT_ISSUE"
+          else
+            python -m src.cli.from_issue
+          fi
+
+      - name: 提交候选池
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/candidates.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "候选池无变化"
+          else
+            git commit -m "gua: 投瓜候选池更新（Issue #${{ github.event.issue.number || github.event.inputs.issue_number }}）"
+            git push
+          fi

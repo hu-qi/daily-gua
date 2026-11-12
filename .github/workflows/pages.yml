@@ -1,0 +1,61 @@
+name: pages
+
+# 把 gua/*.md 与 feed.xml 发布成静态归档站（按日期倒序）。
+# 首次使用需在仓库 Settings → Pages 里把 Source 设为「GitHub Actions」。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "gua/**"
+      - "feed.xml"
+      - "src/publish/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 构建静态站
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python -m src.cli.pages
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传站点产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

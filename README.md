@@ -108,10 +108,9 @@ flowchart LR
 | `pages.yml` | `push`（`gua/**`、`feed.xml`）+ `workflow_dispatch` | 构建并部署 Pages 归档站 |
 | `ci.yml` | `push` / `pull_request` / `workflow_dispatch` | `ruff check .` + `pytest`（全部离线用例） |
 
-> ⚠️ **workflow 文件未随本 PR 推送**：平台提供的 git 凭据缺少 GitHub `workflow` scope，
-> 推送 `.github/workflows/*.yml` 被 GitHub 拒绝（`refusing to allow a Personal Access Token to create or update workflow`）。
-> 六个 workflow 的完整内容已附在本 PR 说明中，维护者在网页端添加（或换用带 `workflow` scope 的凭据重推）即可生效；
-> 代码侧接口、CLI 入口与离线用例均已完成，不依赖这些文件运行。
+> 六个 workflow 均已随本 PR 推送。首次启用仍需维护者在仓库设置中完成：
+> Settings → Actions → General → Workflow permissions = `Read and write`；
+> Settings → Pages → Source = `GitHub Actions`；配置 Secrets `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL`（可选 `X_BEARER_TOKEN`）。
 
 ## 业务标签（代码自动创建，无需手工建）
 
