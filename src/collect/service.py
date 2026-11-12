@@ -34,7 +34,7 @@ class CollectionResult:
             self.sources.append(name)
 
 
-def _merge(results: list[CollectionResult]) -> CollectionResult:
+def merge_results(results: list[CollectionResult]) -> CollectionResult:
     merged = CollectionResult()
     index: dict[str, Post] = {}
     for result in results:
@@ -83,12 +83,24 @@ def collect_from_x_api(settings: Settings, http: HttpClient) -> CollectionResult
     return result
 
 
-def collect_seed_posts(settings: Settings, http: HttpClient, seeds: tuple[str, ...]) -> CollectionResult:
-    """种子链接：X 链接走公开镜像，其他链接走网页探测。"""
+def collect_seed_posts(
+    settings: Settings,
+    http: HttpClient,
+    seeds: tuple[str, ...],
+    *,
+    fallback: bool = False,
+) -> CollectionResult:
+    """种子链接：X 链接走公开镜像，其他链接走网页探测。
+
+    ``fallback=True`` 表示这是「无新素材」时才启用的兜底种子，会在来源里
+    单独标注 ``seed:fallback``，供瓜报如实披露。
+    """
     result = CollectionResult()
     if not seeds:
         return result
-    mirror = XMirrorCollector(http, base_url=settings.mirror_base) if settings.mirror_enabled else None
+    mirror = (
+        XMirrorCollector(http, base_url=settings.mirror_base) if settings.mirror_enabled else None
+    )
     probe = WebProbe(http)
     for url in seeds:
         try:
@@ -121,6 +133,9 @@ def collect_seed_posts(settings: Settings, http: HttpClient, seeds: tuple[str, .
         except HttpError as exc:
             result.warnings.append(f"种子链接采集失败（{url}）: {exc}")
             result.degraded = True
+    if fallback and result.posts:
+        result.add_source("seed:fallback")
+        result.warnings.append("候选池与采集均无新内容，已启用内置兜底种子")
     return result
 
 
@@ -153,7 +168,7 @@ def collect(
         collect_seed_posts(settings, client, effective_seeds),
         collect_from_rss(settings, client),
     ]
-    merged = _merge(parts)
+    merged = merge_results(parts)
     if not merged.posts:
         merged.warnings.append("所有采集通道均无结果")
         merged.degraded = True

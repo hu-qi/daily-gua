@@ -9,6 +9,7 @@ from .service import (
     collect_from_rss,
     collect_from_x_api,
     collect_seed_posts,
+    merge_results,
 )
 from .web import WebDoc, WebProbe, parse_html_document
 from .x_api import XApiCollector
@@ -28,6 +29,7 @@ __all__ = [
     "collect_seed_posts",
     "default_feeds",
     "is_x_status_url",
+    "merge_results",
     "parse_feed",
     "parse_html_document",
     "post_from_mirror_payload",

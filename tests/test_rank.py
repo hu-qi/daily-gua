@@ -13,7 +13,7 @@ from src.rank.snapshots import (
     prune_snapshots,
     save_snapshots,
 )
-from tests.conftest import FIXED_NOW, make_post
+from tests.conftest import FIXED_NOW, SEED_URL, make_post
 
 
 def test_fallback_growth_uses_age_when_no_snapshot(sample_post):
@@ -138,3 +138,90 @@ def test_hours_between_never_negative():
     assert hours_between(now, now) == 0
     assert hours_between(now, now - timedelta(hours=3)) == 0
     assert hours_between(now, now + timedelta(hours=3)) == 3
+
+
+def test_rank_exclude_urls_drops_published_primary():
+    from src.common.models import canonical_url
+
+    published = make_post()
+    fresh = make_post(
+        post_id="1",
+        url="https://example.com/posts/1",
+        likes=0,
+        replies=0,
+        reposts=0,
+        quotes=0,
+        views=10,
+        followers=0,
+    )
+    baseline = rank_posts([published, fresh], now=FIXED_NOW)
+    assert baseline.top1 is not None
+    assert baseline.top1.post.key == published.key
+
+    ranked = rank_posts(
+        [published, fresh],
+        now=FIXED_NOW,
+        exclude_urls={canonical_url(SEED_URL) + "?utm_source=old"},
+    )
+    assert ranked.top1 is not None
+    assert ranked.top1.post.url == "https://example.com/posts/1"
+    assert published.key not in {item.post.key for item in ranked.scored}
+
+
+def test_rank_exclude_urls_default_is_empty(sample_post):
+    ranked = rank_posts([sample_post], now=FIXED_NOW)
+    assert ranked.top1 is not None
+    assert ranked.top1.post.key == sample_post.key
+
+
+def test_published_record_is_idempotent(tmp_path):
+    from src.common.models import canonical_url
+    from src.rank.published import load_published, record_published
+
+    path = tmp_path / "published.json"
+    assert record_published(path, SEED_URL, date="2026-11-10", now=FIXED_NOW) is True
+    entries = load_published(path)
+    assert set(entries) == {canonical_url(SEED_URL)}
+    first_stamp = entries[canonical_url(SEED_URL)].first_published_at
+
+    # 同一 URL（含跟踪参数）重复运行：不新增、不改首次发布时间
+    assert (
+        record_published(
+            path,
+            SEED_URL + "?utm_source=dup",
+            date="2026-11-11",
+            now=FIXED_NOW + timedelta(days=1),
+        )
+        is False
+    )
+    entries = load_published(path)
+    assert len(entries) == 1
+    entry = entries[canonical_url(SEED_URL)]
+    assert entry.date == "2026-11-10"
+    assert entry.first_published_at == first_stamp
+
+
+def test_published_keeps_most_recent_entries(tmp_path):
+    from src.rank.published import MAX_PUBLISHED, load_published, record_published
+
+    path = tmp_path / "published.json"
+    for index in range(MAX_PUBLISHED + 3):
+        record_published(
+            path,
+            f"https://example.com/posts/{index}",
+            date="2026-11-10",
+            now=FIXED_NOW + timedelta(minutes=index),
+        )
+    entries = load_published(path)
+    assert len(entries) == MAX_PUBLISHED
+    assert "https://example.com/posts/0" not in entries
+    assert f"https://example.com/posts/{MAX_PUBLISHED + 2}" in entries
+
+
+def test_load_published_tolerates_missing_and_broken_file(tmp_path):
+    from src.rank.published import load_published
+
+    assert load_published(tmp_path / "missing.json") == {}
+    broken = tmp_path / "broken.json"
+    broken.write_text("{not json", encoding="utf-8")
+    assert load_published(broken) == {}

@@ -78,6 +78,7 @@ class Settings:
     llm_temperature: float = 0.4
     token_budget: int = 24000
     seed_urls: tuple[str, ...] = field(default_factory=tuple)
+    fallback_seed_urls: tuple[str, ...] = field(default_factory=tuple)
     x_keywords: tuple[str, ...] = field(default_factory=tuple)
     x_handles: tuple[str, ...] = field(default_factory=tuple)
     rss_feeds: tuple[str, ...] = field(default_factory=tuple)
@@ -98,7 +99,8 @@ class Settings:
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     """从环境变量构造 Settings。缺失的凭据留空，由调用方决定降级策略。"""
     source = os.environ if env is None else env
-    seeds = _csv(source.get("SEED_URLS")) or DEFAULT_SEED_URLS
+    seeds = _csv(source.get("SEED_URLS"))
+    fallback_seeds = () if seeds else DEFAULT_SEED_URLS
     feeds = _csv(source.get("RSS_FEEDS")) or DEFAULT_RSS_FEEDS
     return Settings(
         llm_base_url=(source.get("LLM_BASE_URL") or "").strip() or None,
@@ -120,6 +122,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         llm_temperature=_number(source, "LLM_TEMPERATURE", 0.4, float),
         token_budget=_number(source, "LLM_TOKEN_BUDGET", 24000, int),
         seed_urls=seeds,
+        fallback_seed_urls=fallback_seeds,
         x_keywords=_csv(source.get("X_KEYWORDS")),
         x_handles=_csv(source.get("X_HANDLES")),
         rss_feeds=feeds,
