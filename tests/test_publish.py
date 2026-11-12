@@ -378,6 +378,13 @@ def test_markdown_to_html_escapes_scripts():
     assert "&lt;script&gt;" in html
 
 
+def test_markdown_to_html_drops_dangerous_link_schemes():
+    html = markdown_to_html("[坏链](javascript:alert(1)) [数据](data:text/html,x)")
+    assert "javascript:" not in html
+    assert "data:text" not in html
+    assert 'href="#"' in html
+
+
 def test_build_site_generates_pages(tmp_path):
     gua = tmp_path / "gua"
     write_report(gua, "2026-11-11", REPORT)

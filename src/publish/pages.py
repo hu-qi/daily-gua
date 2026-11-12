@@ -11,6 +11,7 @@ import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from ..common.frontmatter import ReportDigest, body_of, digest_from_text
 from .feed import FEED_FILE
@@ -31,18 +32,42 @@ a{color:#0b66c3}.meta{color:#666;font-size:.9rem}ul{padding-left:1.3rem}
 """.strip()
 
 
+SAFE_HREF_SCHEMES = frozenset({"http", "https", "mailto"})
+
+
+def _safe_href(url: str) -> str:
+    """链接 scheme 白名单：只允许 http/https/mailto 与相对链接。
+
+    瓜报正文来自采集材料与 LLM 输出，若直接输出 ``javascript:``/``data:`` 链接，
+    Pages 上会变成可点击的脚本执行入口；非白名单一律降级为 ``#``。
+    """
+    raw = (url or "").strip()
+    if not raw:
+        return "#"
+    try:
+        parts = urlsplit(raw)
+    except ValueError:
+        return "#"
+    scheme = (parts.scheme or "").lower()
+    if scheme and scheme not in SAFE_HREF_SCHEMES:
+        return "#"
+    return raw
+
+
 def _inline(text: str) -> str:
     """行内语法：先整体 HTML 转义，再把链接文本换成 ``<a>``。
 
-    链接 URL 在整体转义后已变成 ``&amp;``，这里先 ``html.unescape`` 还原再转义一次，
-    避免带查询参数的链接被二次转义成 ``&amp;amp;`` 而在 Pages 上失效。
+    链接 URL 在整体转义后已变成 ``&amp;``，这里先 ``html.unescape`` 还原、过
+    scheme 白名单、再转义一次，避免带查询参数的链接被二次转义成 ``&amp;amp;``
+    而在 Pages 上失效。
     """
     escaped = html.escape(text)
     escaped = INLINE_CODE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
     escaped = BOLD.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
     escaped = LINK.sub(
         lambda m: (
-            f'<a href="{html.escape(html.unescape(m.group(2)), quote=True)}">{m.group(1)}</a>'
+            f'<a href="{html.escape(_safe_href(html.unescape(m.group(2))), quote=True)}">'
+            f"{m.group(1)}</a>"
         ),
         escaped,
     )

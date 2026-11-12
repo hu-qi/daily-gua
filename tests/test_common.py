@@ -252,6 +252,33 @@ def test_urllib_transport_blocks_private_dns_before_connecting(monkeypatch):
     assert called["open"] is False
 
 
+def test_load_settings_falls_back_on_invalid_numeric_env():
+    """仓库 Variables 填错数值不应让出报流水线崩溃。"""
+    from src.common.config import load_settings
+
+    settings = load_settings(
+        {"HTTP_TIMEOUT_S": "abc", "HTTP_RETRIES": "", "LLM_MAX_TOKENS": "12x"}
+    )
+    assert settings.http_timeout_s == 15.0
+    assert settings.http_retries == 3
+    assert settings.llm_max_tokens == 4096
+
+
+def test_public_socket_addresses_rejects_private_resolution(monkeypatch):
+    """固定连接用的解析函数必须自己拒绝私网地址（而非依赖前置校验）。"""
+    import socket
+
+    from src.common import http as http_module
+
+    def fake_getaddrinfo(host, port, **kwargs):  # noqa: ANN001
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.7", port))]
+
+    monkeypatch.setattr(http_module.socket, "getaddrinfo", fake_getaddrinfo)
+    with pytest.raises(HttpError) as excinfo:
+        http_module._public_socket_addresses("evil.example", 443)
+    assert excinfo.value.blocked is True
+
+
 def test_redirect_handler_revalidates_each_hop():
     import urllib.request
 

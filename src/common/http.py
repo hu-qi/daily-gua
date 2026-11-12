@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import http.client
 import ipaddress
 import json
 import socket
@@ -57,14 +58,13 @@ def _is_blocked_address(address: IpAddress) -> bool:
     )
 
 
-def url_target_problem(url: str, *, resolve: Callable[..., Any] | None = None) -> str:
-    """连接前校验目标：只允许 http/https，且**域名解析结果**必须是公网地址。
+def static_url_problem(url: str) -> str:
+    """无网络的静态校验：仅允许 http/https，且拒绝本机/私网/literal 地址。
 
-    仅检查字面 IP 不足以防止 SSRF（``evil.example`` 可解析到 ``127.0.0.1``）；
-    这里在每次真正发起连接（含重定向）前解析域名并逐个校验，命中私网/本机/
-    链路本地/保留地址即拒绝。返回空串表示可连接，否则返回中文原因。
+    只做字面量判断（不解析 DNS），供采集链路在「决定要不要探测」时复用同一套
+    地址策略；真正的解析结果校验由 :func:`url_target_problem` 与连接时的
+    IP 固定逻辑负责。返回空串表示静态层面可访问，否则返回中文原因。
     """
-    resolver = resolve or socket.getaddrinfo
     try:
         parts = urlsplit(str(url or "").strip())
     except ValueError:
@@ -81,8 +81,25 @@ def url_target_problem(url: str, *, resolve: Callable[..., Any] | None = None) -
         literal: IpAddress | None = ipaddress.ip_address(host)
     except ValueError:
         literal = None
-    if literal is not None:
-        return "私网/链路本地地址不在允许范围" if _is_blocked_address(literal) else ""
+    if literal is not None and _is_blocked_address(literal):
+        return "私网/链路本地地址不在允许范围"
+    return ""
+
+
+def url_target_problem(url: str, *, resolve: Callable[..., Any] | None = None) -> str:
+    """连接前校验目标：只允许 http/https，且**域名解析结果**必须是公网地址。
+
+    仅检查字面 IP 不足以防止 SSRF（``evil.example`` 可解析到 ``127.0.0.1``）；
+    这里在每次真正发起连接（含重定向）前解析域名并逐个校验，命中私网/本机/
+    链路本地/保留地址即拒绝。返回空串表示可连接，否则返回中文原因。
+    """
+    resolver = resolve or socket.getaddrinfo
+    problem = static_url_problem(url)
+    if problem:
+        return problem
+    parts = urlsplit(str(url or "").strip())
+    scheme = (parts.scheme or "").lower()
+    host = (parts.hostname or "").strip().lower()
     try:
         port = parts.port or (443 if scheme == "https" else 80)
     except ValueError:
@@ -122,7 +139,83 @@ class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-_OPENER = urllib.request.build_opener(SafeRedirectHandler())
+def _public_socket_addresses(host: str, port: int) -> list[tuple[int, int, int, Any]]:
+    """解析域名并逐个校验；返回可直接连接的公网地址列表。
+
+    校验与返回在同一处完成，调用方**只连接这里返回的地址**，因此不会在
+    「校验用解析」与「建连用解析」之间留下 DNS 重绑定窗口。
+    """
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except OSError as exc:
+        raise HttpError(f"域名解析失败（{exc}）", blocked=True) from exc
+    addresses: list[tuple[int, int, int, Any]] = []
+    for info in infos or []:
+        family, socktype, proto, _, sockaddr = info
+        raw = str(sockaddr[0]).split("%", 1)[0]
+        try:
+            resolved = ipaddress.ip_address(raw)
+        except ValueError as exc:
+            raise HttpError(f"域名解析结果不可信（{raw}）", blocked=True) from exc
+        if _is_blocked_address(resolved):
+            raise HttpError(f"域名解析到非公网地址（{raw}）", blocked=True)
+        addresses.append((family, socktype, proto, sockaddr))
+    if not addresses:
+        raise HttpError("域名未解析到任何地址", blocked=True)
+    return addresses
+
+
+def _connect_pinned(
+    host: str,
+    port: int,
+    timeout: float | None,
+    source_address: tuple[str, int] | None,
+) -> socket.socket:
+    family, socktype, proto, sockaddr = _public_socket_addresses(host, port)[0]
+    sock = socket.socket(family, socktype, proto)
+    try:
+        if timeout is not None:
+            sock.settimeout(timeout)
+        if source_address:
+            sock.bind(source_address)
+        sock.connect(sockaddr)
+    except BaseException:
+        sock.close()
+        raise
+    return sock
+
+
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    """连接已校验的公网 IP，而不是让系统再次解析主机名。"""
+
+    def connect(self) -> None:
+        self.sock = _connect_pinned(self.host, self.port, self.timeout, self.source_address)
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """同上，并在固定 IP 上完成 TLS 握手（SNI 仍使用原始主机名）。"""
+
+    def connect(self) -> None:
+        sock = _connect_pinned(self.host, self.port, self.timeout, self.source_address)
+        server_hostname = getattr(self, "_tunnel_host", None) or self.host
+        self.sock = self._context.wrap_socket(sock, server_hostname=server_hostname)
+
+
+class _PinnedHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):  # noqa: ANN001 - 协议签名
+        return self.do_open(_PinnedHTTPConnection, req)
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):  # noqa: ANN001 - 协议签名
+        return self.do_open(_PinnedHTTPSConnection, req, context=self._context)
+
+
+_OPENER = urllib.request.build_opener(
+    SafeRedirectHandler(),
+    _PinnedHTTPHandler,
+    _PinnedHTTPSHandler,
+)
 
 
 def urllib_transport(
@@ -148,8 +241,9 @@ def urllib_transport(
                     url=url,
                 )
             return int(response.status), raw
-    except urllib.error.HTTPError as exc:  # 4xx/5xx 也要读 body 便于诊断
-        return int(exc.code), exc.read()
+    except urllib.error.HTTPError as exc:  # 4xx/5xx 也要读 body 便于诊断，但同样限长
+        raw = exc.read(MAX_RESPONSE_BYTES + 1)
+        return int(exc.code), raw[:MAX_RESPONSE_BYTES]
 
 
 def _parse_body(status: int, body: bytes, url: str) -> Any:

@@ -114,6 +114,18 @@ def parse_vote(argument: str) -> str | None:
     return None
 
 
+def is_bot_login(login: str) -> bool:
+    """判断机器人账号：GitHub 约定为 ``[bot]`` 后缀，自建机器人多用 ``-bot``/``_bot``。
+
+    不再用 ``"bot" in login`` 的子串匹配——那会把 ``abbott``、``robot`` 等真人账号
+    误判为机器人并吞掉其投票。
+    """
+    lowered = (login or "").strip().lower()
+    if not lowered:
+        return False
+    return lowered.endswith(("[bot]", "-bot", "_bot"))
+
+
 def tally_votes(comments: list[dict[str, object]]) -> tuple[int, int]:
     """统计票数：**按用户去重**（同一用户取最后一次有效票），只认 ``/vote`` 命令。
 
@@ -125,7 +137,7 @@ def tally_votes(comments: list[dict[str, object]]) -> tuple[int, int]:
         body = str(item.get("body") or "")
         user = item.get("user") or {}
         login = str(user.get("login") or "") if isinstance(user, dict) else ""
-        if not login or "bot" in login.lower():
+        if not login or is_bot_login(login):
             continue
         command = parse_command(body)
         if command is None or command.name != "vote":

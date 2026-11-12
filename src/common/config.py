@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
 DEFAULT_LLM_MODEL = "antigravity/gemini-3.8-flash"
@@ -33,6 +33,26 @@ def _flag(value: str | None, default: bool) -> bool:
     if value is None or value == "":
         return default
     return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _number(
+    source: Mapping[str, str],
+    key: str,
+    default: float | int,
+    cast: Callable[[str], float | int],
+) -> float | int:
+    """数值型环境变量容错：空值或非法值一律回退默认值，不抛 ``ValueError``。
+
+    Actions Variables 由人工填写，写错一个 ``HTTP_RETRIES=abc`` 不应让整条
+    出报流水线直接崩溃。
+    """
+    raw = (source.get(key) or "").strip()
+    if not raw:
+        return default
+    try:
+        return cast(raw)
+    except (TypeError, ValueError):
+        return default
 
 
 @dataclass(frozen=True)
@@ -93,12 +113,12 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         github_api_base=(source.get("GITHUB_API_URL") or "").strip() or "https://api.github.com",
         gua_dir=(source.get("GUA_DIR") or "").strip() or "gua",
         state_dir=(source.get("GUA_STATE_DIR") or "").strip() or "state",
-        http_timeout_s=float(source.get("HTTP_TIMEOUT_S") or 15.0),
-        http_retries=int(source.get("HTTP_RETRIES") or 3),
-        llm_timeout_s=float(source.get("LLM_TIMEOUT_S") or 90.0),
-        llm_max_tokens=int(source.get("LLM_MAX_TOKENS") or 4096),
-        llm_temperature=float(source.get("LLM_TEMPERATURE") or 0.4),
-        token_budget=int(source.get("LLM_TOKEN_BUDGET") or 24000),
+        http_timeout_s=_number(source, "HTTP_TIMEOUT_S", 15.0, float),
+        http_retries=_number(source, "HTTP_RETRIES", 3, int),
+        llm_timeout_s=_number(source, "LLM_TIMEOUT_S", 90.0, float),
+        llm_max_tokens=_number(source, "LLM_MAX_TOKENS", 4096, int),
+        llm_temperature=_number(source, "LLM_TEMPERATURE", 0.4, float),
+        token_budget=_number(source, "LLM_TOKEN_BUDGET", 24000, int),
         seed_urls=seeds,
         x_keywords=_csv(source.get("X_KEYWORDS")),
         x_handles=_csv(source.get("X_HANDLES")),

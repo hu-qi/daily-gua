@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import html
-import ipaddress
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from urllib.parse import urlsplit
 
-from ..common.http import HttpClient, HttpError
+from ..common.http import HttpClient, HttpError, static_url_problem
 
 _TITLE = re.compile(r"(?is)<title[^>]*>(.*?)</title>")
 _OG_TITLE = re.compile(
@@ -19,44 +17,19 @@ _OG_DESC = re.compile(
     r"""(?is)<meta[^>]+(?:property|name)=["'](?:og:description|description)["'][^>]+content=["']([^"']+)["']"""
 )
 
-ALLOWED_SCHEMES = frozenset({"http", "https"})
 MAX_BODY_CHARS = 200_000  # 只解析头部元信息，超大页面截断后再匹配，避免无界读入
-BLOCKED_HOSTS = frozenset({"localhost", "localhost.localdomain", "ip6-localhost"})
 
 
 def url_problem(url: str) -> str:
-    """投瓜链接的静态安全校验：只允许 http/https、拒绝本机/私网/link-local 目标。
+    """投瓜链接的静态安全校验：复用 ``common.http`` 的统一地址策略。
 
     返回空串表示可探测；否则返回中文原因（供回执如实说明「已跳过」）。
     这里只做无网络的字面量校验；**域名解析结果与每次重定向**由
-    ``common.http.url_target_problem`` 在真正发起连接前再次校验（防 DNS 重绑定/302 绕过）。
+    ``common.http.url_target_problem`` 与固定已校验 IP 的连接再次校验
+    （防 DNS 重绑定/302 绕过）。
     """
-    try:
-        parts = urlsplit(str(url or "").strip())
-    except ValueError:
-        return "链接格式非法，已跳过"
-    scheme = (parts.scheme or "").lower()
-    if scheme not in ALLOWED_SCHEMES:
-        return f"仅支持 http/https 链接（收到 {scheme or '无 scheme'}），已跳过"
-    host = (parts.hostname or "").strip().lower()
-    if not host:
-        return "链接缺少主机名，已跳过"
-    if host in BLOCKED_HOSTS or host.endswith(".localhost"):
-        return "本机地址不在采集范围，已跳过"
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError:
-        return ""
-    if (
-        address.is_private
-        or address.is_loopback
-        or address.is_link_local
-        or address.is_multicast
-        or address.is_reserved
-        or address.is_unspecified
-    ):
-        return "私网/链路本地地址不在采集范围，已跳过"
-    return ""
+    reason = static_url_problem(url)
+    return f"{reason}，已跳过" if reason else ""
 
 
 @dataclass(frozen=True)

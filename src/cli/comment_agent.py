@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..agent.commands import CommentAgent, parse_command, probe_url
+from ..agent.commands import CommentAgent, is_bot_login, parse_command, probe_url
 from ..common.config import load_settings
 from ..common.frontmatter import load_digest
 from ..common.http import HttpClient
@@ -114,7 +114,7 @@ def run(argv: list[str] | None = None) -> int:
     command = parse_command(body)
     if command is None:
         return emit({"ok": True, "skipped": "非命令评论"})
-    if login and ("bot" in login or login.endswith("[bot]")):
+    if login and is_bot_login(login):
         return emit({"ok": True, "skipped": "忽略机器人评论"})
     # comment_id 有效才做幂等：workflow_dispatch 手工试跑默认 0，不能把 "0" 落盘，
     # 否则第一次手工试跑之后所有手工试跑都会被「已处理」跳过。

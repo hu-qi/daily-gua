@@ -76,6 +76,16 @@ def test_tally_votes_ignores_bots_and_duplicates():
     assert tally_votes(comments) == (1, 1)
 
 
+def test_tally_votes_does_not_misclassify_human_login_with_bot_substring():
+    """``abbott``/``robot`` 等真人账号不应因包含 bot 子串被吞票。"""
+    comments = [
+        {"user": {"login": "abbott"}, "body": "/vote 🍉"},
+        {"user": {"login": "robot"}, "body": "/vote 🫠"},
+        {"user": {"login": "dependabot[bot]"}, "body": "/vote 🍉"},
+    ]
+    assert tally_votes(comments) == (1, 1)
+
+
 def test_tally_votes_dedupes_same_user_repeated_votes():
     """同一用户重复 /vote 🍉 不得叠加（spec FR-3：每人每票型一次）。"""
     comments = [
