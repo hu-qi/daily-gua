@@ -5,7 +5,7 @@
     <link>https://hu-qi.github.io/daily-gua</link>
     <description>每天北京时间 09:00，自动整理科技 / AI 圈当天最热的一个瓜。</description>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 12 Nov 2026 09:28:03 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 12 Nov 2026 09:30:03 +0000</lastBuildDate>
     <atom:link href="https://hu-qi.github.io/daily-gua/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title>🍉 每日一瓜 2026-11-12 · 仅链接汇总：某知名 AI 博主被大号给爆锤了</title>
@@ -20,6 +20,13 @@
       <guid isPermaLink="true">https://hu-qi.github.io/daily-gua/gua/2026-11-11.md</guid>
       <pubDate>Wed, 11 Nov 2026 01:00:00 +0000</pubDate>
       <description>AI 博主称「某知名 AI 博主被大号给爆锤了」，只留一张截图（吃瓜指数 76/100 · 热）</description>
+    </item>
+    <item>
+      <title>🍉 每日一瓜 2026-11-10 · 仅链接汇总：某知名 AI 博主被大号给爆锤了</title>
+      <link>https://hu-qi.github.io/daily-gua/gua/2026-11-10.md</link>
+      <guid isPermaLink="true">https://hu-qi.github.io/daily-gua/gua/2026-11-10.md</guid>
+      <pubDate>Tue, 10 Nov 2026 01:00:00 +0000</pubDate>
+      <description>仅链接汇总：某知名 AI 博主被大号给爆锤了（吃瓜指数 74/100 · 热）</description>
     </item>
   </channel>
 </rss>
