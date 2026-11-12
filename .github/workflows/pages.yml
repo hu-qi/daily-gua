@@ -10,6 +10,12 @@ on:
       - "feed.xml"
       - "src/publish/**"
       - ".github/workflows/pages.yml"
+  # daily-gua 用 GITHUB_TOKEN 提交，GitHub 不会为其 push 触发新的 workflow run，
+  # 因此需要在该工作流完成后显式再构建一次 Pages。
+  workflow_run:
+    workflows: [daily-gua]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,6 +29,10 @@ concurrency:
 
 jobs:
   build:
+    # workflow_run 只在 daily-gua 成功时重建归档站；其它触发方式不受影响。
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
