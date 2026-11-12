@@ -1,0 +1,94 @@
+name: gua-comment-agent
+
+# 评论区互动：/more 追更、/fact-check 证据核查、/vote 🍉/🫠 吃瓜打分。
+# 触发后立即回帖（job 超时 5 分钟），同一 comment id 只处理一次（幂等）。
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "目标 Issue 编号"
+        required: true
+      comment_id:
+        description: "评论 id（用于幂等键，可填 0 做手工试跑）"
+        required: false
+        default: "0"
+      body:
+        description: "命令正文，如 /fact-check"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: gua-comment-${{ github.event.comment.id || github.event.inputs.comment_id }}
+  cancel-in-progress: false
+
+jobs:
+  reply:
+    # 只处理 Issue 评论；issue_comment 也会在 PR 上触发，PR 下不应回帖。
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.pull_request == null && (
+        contains(github.event.comment.body, '/more') ||
+        contains(github.event.comment.body, '/fact-check') ||
+        contains(github.event.comment.body, '/vote')
+      ))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 解析命令并回帖
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          INPUT_ISSUE: ${{ github.event.inputs.issue_number }}
+          INPUT_COMMENT: ${{ github.event.inputs.comment_id }}
+          INPUT_BODY: ${{ github.event.inputs.body }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python -m src.cli.comment_agent \
+              --issue "$INPUT_ISSUE" \
+              --comment-id "${INPUT_COMMENT:-0}" \
+              --body "$INPUT_BODY"
+          else
+            python -m src.cli.comment_agent
+          fi
+
+      - name: 提交幂等状态
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/handled_comments.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "无状态变更"
+          else
+            git commit -m "chore: 评论处理状态更新"
+            for attempt in 1 2 3; do
+              if git push; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "推送失败：多次 rebase 重试仍被拒绝" >&2
+                exit 1
+              fi
+              echo "推送被拒（可能与其他流水线并发更新同一分支），rebase 后重试（第 $attempt 次）"
+              sleep $((2 ** attempt))
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            done
+          fi

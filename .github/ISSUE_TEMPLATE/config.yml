@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 查看历史瓜报
+    url: https://github.com/hu-qi/daily-gua/tree/main/gua
+    about: 所有已发布的瓜报都在 gua/ 目录（按日期命名）
+  - name: 评论命令说明
+    url: https://github.com/hu-qi/daily-gua#互动命令
+    about: "/more 追更 · /fact-check 证据核查 · /vote 🍉/🫠 吃瓜打分"

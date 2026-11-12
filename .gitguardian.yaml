@@ -1,0 +1,8 @@
+# GitGuardian 扫描配置
+# tests/test_common.py 里出现的 "Authorization: Bearer <16 位字母串>" 与 "access_token=<13 位字母数字串>"
+# 是日志脱敏单测的构造样例（假值，不指向任何真实服务），已在 PR 评论中核对确认。
+version: 2
+
+secret:
+  ignored-paths:
+    - "tests/test_common.py"

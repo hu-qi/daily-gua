@@ -1,0 +1,54 @@
+name: "🍉 投瓜"
+description: 提交一条你觉得值得上榜的瓜（X 链接 / 新闻链接），Agent 会核查并回帖
+title: "[投瓜] "
+labels: ["gua-submit"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢投瓜。提交后「投瓜回执」会在几分钟内回帖：说明链接是否可访问、公开互动数据，
+        以及是否进入次日候选池。**只接受公开内容**；涉及他人隐私（手机号/住址/私聊截图）会被跳过。
+  - type: input
+    id: gua_url
+    attributes:
+      label: 瓜链接
+      description: 优先 X 状态帖链接（https://x.com/<用户名>/status/<id>），也可以是新闻/博客原文。
+      placeholder: https://x.com/xxx/status/1234567890
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 一句话看点
+      description: 这条为什么值得上榜？争点在哪里？
+      placeholder: 双方就「谁在带节奏」正面互怼，评论区已经打起来了
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 补充证据（可选）
+      description: 当事方回应、原始截图来源、时间线等，每行一个链接。
+      placeholder: |
+        https://x.com/xxx/status/...
+        https://example.com/news/...
+    validations:
+      required: false
+  - type: dropdown
+    id: role
+    attributes:
+      label: 你的身份
+      options:
+        - 吃瓜群众
+        - 当事人
+        - 知情者
+        - 媒体/机构
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: 合规确认
+      options:
+        - label: 我确认提交内容来自公开渠道，且不含他人隐私信息
+          required: true

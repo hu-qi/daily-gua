@@ -1,0 +1,77 @@
+name: gua-from-issue
+
+# 投瓜回执：Issue 打开或被打上 gua-submit 标签时，核查链接并回帖，通过者进入次日候选池。
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "投瓜 Issue 编号"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: gua-from-issue-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    # 仅处理挂了 gua-submit 标签或以 [投瓜] 标题开帖的 Issue（手动触发不受限）。
+    # 标题兜底覆盖「标签未建/被移除」时 GitHub 静默丢弃标签、标签条件永不成立的情况。
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'gua-submit') ||
+      startsWith(github.event.issue.title, '[投瓜]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 核查并回帖
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          INPUT_ISSUE: ${{ github.event.inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_ISSUE:-}" ]; then
+            python -m src.cli.from_issue --issue "$INPUT_ISSUE"
+          else
+            python -m src.cli.from_issue
+          fi
+
+      - name: 提交候选池
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/candidates.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "候选池无变化"
+          else
+            git commit -m "gua: 投瓜候选池更新（Issue #${{ github.event.issue.number || github.event.inputs.issue_number }}）"
+            for attempt in 1 2 3; do
+              if git push; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "推送失败：多次 rebase 重试仍被拒绝" >&2
+                exit 1
+              fi
+              echo "推送被拒（可能与其他流水线并发更新同一分支），rebase 后重试（第 $attempt 次）"
+              sleep $((2 ** attempt))
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            done
+          fi

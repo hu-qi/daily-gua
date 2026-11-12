@@ -1,0 +1,57 @@
+name: x-share
+
+# 只生成 X 分享草稿 + intent 链接，**不自动发帖**。
+# 需要人工：下载 artifact（或看 Issue 评论）→ 检查文案 → 点 intent 链接自行发布。
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "瓜报日期 YYYY-MM-DD（留空 = 最新一页）"
+        required: false
+      comment:
+        description: "同时把草稿评论到当日 Issue（供人工取用）"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 生成草稿（不自动发帖）
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+          INPUT_COMMENT: ${{ github.event.inputs.comment }}
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [ -n "${INPUT_DATE:-}" ]; then
+            ARGS+=(--date "$INPUT_DATE")
+          fi
+          if [ "${INPUT_COMMENT:-true}" = "true" ]; then
+            ARGS+=(--comment)
+          fi
+          python -m src.cli.x_share "${ARGS[@]}"
+
+      - name: 上传草稿 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x-draft
+          path: dist/
+          if-no-files-found: warn
+          retention-days: 7
