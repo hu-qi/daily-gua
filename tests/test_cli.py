@@ -520,3 +520,82 @@ def test_pages_cli_builds_site(workspace, capsys):
     index = (workspace / "_site" / "index.html").read_text(encoding="utf-8")
     assert "2026-11-11" in index
     assert (workspace / "_site" / "gua" / "2026-11-11.html").is_file()
+
+
+def _primary_url(report_text: str) -> str:
+    for line in report_text.splitlines():
+        if line.startswith("primary_url:"):
+            return json.loads(line.split(":", 1)[1].strip())
+    return ""
+
+
+def test_daily_consecutive_days_produce_different_primary_url(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload, rss=RSS_SAMPLE))
+
+    assert daily.run(["--date", "2026-11-10"]) == 0
+    _output(capsys)
+    day_one = (workspace / "gua" / "2026-11-10.md").read_text(encoding="utf-8")
+    assert _primary_url(day_one) == SEED_URL
+
+    assert daily.run(["--date", "2026-11-11"]) == 0
+    _output(capsys)
+    day_two = (workspace / "gua" / "2026-11-11.md").read_text(encoding="utf-8")
+    assert _primary_url(day_two) == "https://example.com/posts/1"
+    assert _primary_url(day_one) != _primary_url(day_two)
+
+
+def test_daily_reuses_published_melon_with_visible_reason(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """唯一候选已发布：复用旧瓜但必须显式标注原因，且 published.json 不膨胀。"""
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
+
+    assert daily.run(["--date", "2026-11-10"]) == 0
+    _output(capsys)
+
+    assert daily.run(["--date", "2026-11-11"]) == 0
+    payload = _output(capsys)
+    assert payload["ok"] is True
+    assert "无新素材" in payload["downgrade_reason"]
+    assert "复用" in payload["downgrade_reason"]
+
+    day_two = (workspace / "gua" / "2026-11-11.md").read_text(encoding="utf-8")
+    assert _primary_url(day_two) == SEED_URL
+    assert "无新素材" in day_two
+    assert "复用" in day_two
+
+    state = json.loads((workspace / "state" / "published.json").read_text(encoding="utf-8"))
+    assert len(state["posts"]) == 1
+
+    # 同日/次日重复运行不重复追加
+    assert daily.run(["--date", "2026-11-11"]) == 0
+    _output(capsys)
+    again = json.loads((workspace / "state" / "published.json").read_text(encoding="utf-8"))
+    assert len(again["posts"]) == 1
+
+
+def test_daily_default_seed_is_only_a_fallback(
+    workspace, monkeypatch, capsys, mirror_payload
+):
+    """未配置 SEED_URLS 时，默认固定种子不应在有 RSS 新内容的日子进入候选。"""
+    monkeypatch.delenv("SEED_URLS", raising=False)
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload, rss=RSS_SAMPLE))
+
+    assert daily.run(["--date", "2026-11-10"]) == 0
+    _output(capsys)
+    report = (workspace / "gua" / "2026-11-10.md").read_text(encoding="utf-8")
+    assert _primary_url(report) == "https://example.com/posts/1"
+
+
+def test_daily_uses_default_seed_when_no_new_content(workspace, monkeypatch, capsys, mirror_payload):
+    """无候选池/采集新内容时，默认固定种子才作为兜底来源。"""
+    monkeypatch.delenv("SEED_URLS", raising=False)
+    _patch_transport(monkeypatch, daily, _mirror_transport(mirror_payload))
+
+    assert daily.run(["--date", "2026-11-10"]) == 0
+    payload = _output(capsys)
+    assert payload["ok"] is True
+    assert _primary_url((workspace / "gua" / "2026-11-10.md").read_text(encoding="utf-8")) == SEED_URL
+    assert "seed:fallback" in payload["sources_used"]
