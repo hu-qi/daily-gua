@@ -138,15 +138,18 @@ def test_sanitize_payload_drops_fabricated_links(sample_post):
 
 def test_build_report_with_cited_payload(sample_post):
     ranked = rank_posts([sample_post], now=FIXED_NOW)
+    deterministic = melon_index(sample_post, now=FIXED_NOW)  # 固定时钟，避免新鲜度随真实日期漂移
     report = build_report(
         GOOD_PAYLOAD,
         primary=sample_post,
         evidence=[sample_post],
         candidates=ranked.candidates,
         date="2026-11-11",
+        melon=deterministic,
     )
     assert report.meta.generated_by == "llm"
-    assert report.melon is not None and report.melon.score == 74  # 确定性值，不被 LLM 的 76 覆盖
+    # 确定性值，不被 LLM 的 76 覆盖
+    assert report.melon is not None and report.melon.score == deterministic.score
     assert "76" in report.meta.llm_melon_suggestion
     assert any("已按规则忽略" in reason for reason in report.melon.reasons)
     assert report.has_original_link()
@@ -248,21 +251,24 @@ def test_build_report_without_payload_degrades(sample_post):
 
 def test_render_markdown_contains_required_sections(sample_post):
     ranked = rank_posts([sample_post], now=FIXED_NOW)
+    deterministic = melon_index(sample_post, now=FIXED_NOW)  # 固定时钟，避免新鲜度随真实日期漂移
     report = build_report(
         GOOD_PAYLOAD,
         primary=sample_post,
         evidence=[sample_post],
         candidates=ranked.candidates,
         date="2026-11-11",
+        melon=deterministic,
     )
     markdown = render_markdown(report)
     for expected in ("## 一句话摘瓜", "## 吃瓜指数", "## 来龙去脉", "## 关键原文",
-                     "## ⚠️ 未证实", SEED_URL, "**74/100（热）**"):
+                     "## ⚠️ 未证实", SEED_URL,
+                     f"**{deterministic.score}/100（{deterministic.level}）**"):
         assert expected in markdown, expected
 
     digest = digest_from_text(markdown)
     assert digest.date == "2026-11-11"
-    assert digest.melon_score == 74
+    assert digest.melon_score == deterministic.score
     assert digest.primary_url == SEED_URL
     assert digest.unverified
 
