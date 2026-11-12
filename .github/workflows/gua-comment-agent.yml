@@ -28,11 +28,14 @@ concurrency:
 
 jobs:
   reply:
+    # 只处理 Issue 评论；issue_comment 也会在 PR 上触发，PR 下不应回帖。
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.comment.body, '/more') ||
-      contains(github.event.comment.body, '/fact-check') ||
-      contains(github.event.comment.body, '/vote')
+      (github.event.issue.pull_request == null && (
+        contains(github.event.comment.body, '/more') ||
+        contains(github.event.comment.body, '/fact-check') ||
+        contains(github.event.comment.body, '/vote')
+      ))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -76,5 +79,16 @@ jobs:
             echo "无状态变更"
           else
             git commit -m "chore: 评论处理状态更新"
-            git push
+            for attempt in 1 2 3; do
+              if git push; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "推送失败：多次 rebase 重试仍被拒绝" >&2
+                exit 1
+              fi
+              echo "推送被拒（可能与其他流水线并发更新同一分支），rebase 后重试（第 $attempt 次）"
+              sleep $((2 ** attempt))
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            done
           fi

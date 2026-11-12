@@ -20,10 +20,12 @@ concurrency:
 
 jobs:
   triage:
-    # 仅处理挂了 gua-submit 标签的 Issue（手动触发不受限）
+    # 仅处理挂了 gua-submit 标签或以 [投瓜] 标题开帖的 Issue（手动触发不受限）。
+    # 标题兜底覆盖「标签未建/被移除」时 GitHub 静默丢弃标签、标签条件永不成立的情况。
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.issue.labels.*.name, 'gua-submit')
+      contains(github.event.issue.labels.*.name, 'gua-submit') ||
+      startsWith(github.event.issue.title, '[投瓜]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -60,5 +62,16 @@ jobs:
             echo "候选池无变化"
           else
             git commit -m "gua: 投瓜候选池更新（Issue #${{ github.event.issue.number || github.event.inputs.issue_number }}）"
-            git push
+            for attempt in 1 2 3; do
+              if git push; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "推送失败：多次 rebase 重试仍被拒绝" >&2
+                exit 1
+              fi
+              echo "推送被拒（可能与其他流水线并发更新同一分支），rebase 后重试（第 $attempt 次）"
+              sleep $((2 ** attempt))
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            done
           fi

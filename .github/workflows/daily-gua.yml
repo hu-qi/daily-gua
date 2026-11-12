@@ -90,7 +90,18 @@ jobs:
             echo "本次没有文件变更（可能为重复运行）"
           else
             git commit -m "gua: $(date -u +%F) 每日一瓜"
-            git push
+            for attempt in 1 2 3; do
+              if git push; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "推送失败：多次 rebase 重试仍被拒绝" >&2
+                exit 1
+              fi
+              echo "推送被拒（可能与其他流水线并发更新同一分支），rebase 后重试（第 $attempt 次）"
+              sleep $((2 ** attempt))
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            done
           fi
 
       - name: 汇总结果
