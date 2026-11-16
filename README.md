@@ -13,10 +13,11 @@
 
 <!-- GUA:INDEX:START -->
 
-**最新一页**：[2026-11-15 · 仅链接汇总：Show HN: Daily puzzles to kee…](gua/2026-11-15.md) — 吃瓜指数 10/100（微）
+**最新一页**：[2026-11-16 · 仅链接汇总：Amazon MadPot: Honeypot for A…](gua/2026-11-16.md) — 吃瓜指数 10/100（微）
 
 | 日期 | 头条 | 吃瓜指数 | 链接 |
 | --- | --- | --- | --- |
+| 2026-11-16 | 仅链接汇总：Amazon MadPot: Honeypot for A… | 10（微） | [打开](gua/2026-11-16.md) |
 | 2026-11-15 | 仅链接汇总：Show HN: Daily puzzles to kee… | 10（微） | [打开](gua/2026-11-15.md) |
 | 2026-11-14 | 仅链接汇总：FAA tees up $875M AI tool to … | 10（微） | [打开](gua/2026-11-14.md) |
 | 2026-11-13 | 仅链接汇总：Show HN: AxiomStory – Keep st… | 10（微） | [打开](gua/2026-11-13.md) |
