@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "captured_at": "2026-11-17T08:42:05.052007+00:00",
+  "captured_at": "2026-11-18T08:06:02.963693+00:00",
   "posts": {
-    "https://github.com/grfdsasdvef/awesome-ai-agent-infrastructure": {
-      "url": "https://github.com/grfdsasdvef/awesome-ai-agent-infrastructure",
-      "author": "snowdensay",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.bleepingcomputer.com/news/security/researchers-hijack-hugging-face-account-for-popular-kokoro-ai-model": {
+      "url": "https://www.bleepingcomputer.com/news/security/researchers-hijack-hugging-face-account-for-popular-kokoro-ai-model/",
+      "author": "shoshkin",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -15,10 +15,10 @@
         "bookmarks": 0
       }
     },
-    "https://github.com/MobileReality/lantern": {
-      "url": "https://github.com/MobileReality/lantern",
-      "author": "gitsad",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.bloomberg.com/news/articles/2026-11-18/south-korea-proposes-75-000-bounties-to-catch-ai-exam-cheats": {
+      "url": "https://www.bloomberg.com/news/articles/2026-11-18/south-korea-proposes-75-000-bounties-to-catch-ai-exam-cheats",
+      "author": "haebom",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -28,10 +28,10 @@
         "bookmarks": 0
       }
     },
-    "https://github.com/directionally-local/autopilot": {
-      "url": "https://github.com/directionally-local/autopilot",
-      "author": "doppp",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "x:2122780345947017287": {
+      "url": "https://twitter.com/MGately_au/status/2122780345947017287",
+      "author": "panza",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -41,10 +41,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.cmu-agents.com": {
-      "url": "https://www.cmu-agents.com/#/schedule",
-      "author": "ijidak",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://murer.ai": {
+      "url": "https://murer.ai",
+      "author": "vednig",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -54,10 +54,10 @@
         "bookmarks": 0
       }
     },
-    "https://zimmergren.net/ai-and-compliance": {
-      "url": "https://zimmergren.net/ai-and-compliance/",
-      "author": "zimmergren",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://nicolasbouliane.com/blog/death-by-ai": {
+      "url": "https://nicolasbouliane.com/blog/death-by-ai",
+      "author": "grey-area",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -67,88 +67,10 @@
         "bookmarks": 0
       }
     },
-    "https://nolanfrausto.com/posts/ai-slop-spiral": {
-      "url": "https://nolanfrausto.com/posts/ai-slop-spiral/",
-      "author": "frausto",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://mizan.techforpalestine.org/hostage-or-detainee": {
-      "url": "https://mizan.techforpalestine.org/hostage-or-detainee/",
-      "author": "k1m",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.microsoft.com/en-us/research/blog/tokeneconomizer-learning-from-experience-to-make-ai-coding-agents-more-efficient": {
-      "url": "https://www.microsoft.com/en-us/research/blog/tokeneconomizer-learning-from-experience-to-make-ai-coding-agents-more-efficient/",
-      "author": "matt_d",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.nature.com/articles/s41591-026-04808-6": {
-      "url": "https://www.nature.com/articles/s41591-026-04808-6",
-      "author": "tibastral2",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://backplaneworks.com": {
-      "url": "https://backplaneworks.com/",
-      "author": "i2cjak",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.bloomberg.com/news/articles/2026-11-17/pimco-says-ai-bond-spreads-may-tighten-as-data-center-boom-slows": {
-      "url": "https://www.bloomberg.com/news/articles/2026-11-17/pimco-says-ai-bond-spreads-may-tighten-as-data-center-boom-slows",
-      "author": "madihaa",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.seangoedecke.com/llms-are-terrible-at-designing-ai-systems": {
-      "url": "https://www.seangoedecke.com/llms-are-terrible-at-designing-ai-systems/",
-      "author": "saikatsg",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.ft.com/content/5168b3e9-75d0-4be0-9ccd-d327d6b16c05": {
+      "url": "https://www.ft.com/content/5168b3e9-75d0-4be0-9ccd-d327d6b16c05",
+      "author": "theanonymousone",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -159,9 +81,9 @@
       }
     },
     "https://news.ycombinator.com/item": {
-      "url": "https://news.ycombinator.com/item?id=50527647",
-      "author": "joddystreet",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+      "url": "https://news.ycombinator.com/item?id=50542654",
+      "author": "darkmatriarch",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -171,10 +93,10 @@
         "bookmarks": 0
       }
     },
-    "https://glyphzerolabs.com/blog/2026-04-17-agentic-ai-attacks": {
-      "url": "https://glyphzerolabs.com/blog/2026-04-17-agentic-ai-attacks/",
-      "author": "mooreds",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.youtube.com/watch": {
+      "url": "https://www.youtube.com/watch?v=e_m99aR7_3Q",
+      "author": "matt_d",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -184,10 +106,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.reuters.com/legal/litigation/us-issues-rule-protect-advanced-ai-chips-being-accessed-remotely-2026-11-16": {
-      "url": "https://www.reuters.com/legal/litigation/us-issues-rule-protect-advanced-ai-chips-being-accessed-remotely-2026-11-16/",
-      "author": "geox",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://arxiv.org/abs/2607.06681": {
+      "url": "https://arxiv.org/abs/2607.06681",
+      "author": "vaidsumer",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -197,10 +119,10 @@
         "bookmarks": 0
       }
     },
-    "https://arxiv.org/abs/2609.04043": {
-      "url": "https://arxiv.org/abs/2609.04043",
-      "author": "chubot",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://science.caseyhandmer.com/physics": {
+      "url": "https://science.caseyhandmer.com/physics/",
+      "author": "gcoguiec",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -210,10 +132,10 @@
         "bookmarks": 0
       }
     },
-    "https://usewoolly.com": {
-      "url": "https://usewoolly.com/",
-      "author": "rjcuff",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://zenodo.org/records/23778866": {
+      "url": "https://zenodo.org/records/23778866",
+      "author": "douglasjrodrigu",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -223,10 +145,10 @@
         "bookmarks": 0
       }
     },
-    "https://cacm.acm.org/blogcacm/ai-agents-cant-talk": {
-      "url": "https://cacm.acm.org/blogcacm/ai-agents-cant-talk/",
-      "author": "abhilash539",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://lore.kernel.org/lkml/df1c1fa031ba7e66486348dc37d1a7be53c18e43.1794894953.git.wqu@suse.com": {
+      "url": "https://lore.kernel.org/lkml/df1c1fa031ba7e66486348dc37d1a7be53c18e43.1794894953.git.wqu@suse.com/",
+      "author": "thunderbong",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -236,10 +158,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.macrumors.com/2026/11/16/apple-icloud-paid-siri-ai-upgrade": {
-      "url": "https://www.macrumors.com/2026/11/16/apple-icloud-paid-siri-ai-upgrade/",
-      "author": "soheilpro",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://donsbot.com/2026/11/17/ai-assisted-code-at-scale-provenance-quality-centrality-and-review-time": {
+      "url": "https://donsbot.com/2026/11/17/ai-assisted-code-at-scale-provenance-quality-centrality-and-review-time/",
+      "author": "gbacon",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -249,10 +171,10 @@
         "bookmarks": 0
       }
     },
-    "https://techcrunch.com/2026/11/16/us-tightens-ai-chip-export-controls-to-deter-chinese-companies-from-accessing-compute-remotely": {
-      "url": "https://techcrunch.com/2026/11/16/us-tightens-ai-chip-export-controls-to-deter-chinese-companies-from-accessing-compute-remotely/",
-      "author": "mezark",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://arxiv.org/abs/2610.41700": {
+      "url": "https://arxiv.org/abs/2610.41700",
+      "author": "matt_d",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -262,10 +184,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.oreilly.com/library/view/an-illustrated-guide/9798341662681": {
-      "url": "https://www.oreilly.com/library/view/an-illustrated-guide/9798341662681/",
-      "author": "teleforce",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://octopus.com/blog/engineering-vitals-in-the-age-of-ai": {
+      "url": "https://octopus.com/blog/engineering-vitals-in-the-age-of-ai",
+      "author": "paulstovell",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -275,10 +197,10 @@
         "bookmarks": 0
       }
     },
-    "https://studio.sinapsdata.com.br": {
-      "url": "https://studio.sinapsdata.com.br",
-      "author": "sadrk",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://greyswansignals.com": {
+      "url": "https://greyswansignals.com",
+      "author": "hairoglyphics",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -288,10 +210,10 @@
         "bookmarks": 0
       }
     },
-    "https://robert-mcdermott.github.io/astrum": {
-      "url": "https://robert-mcdermott.github.io/astrum/",
-      "author": "mcdermott",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://uka-135-map.pplx.app": {
+      "url": "https://uka-135-map.pplx.app",
+      "author": "pinuslongaeva",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -301,10 +223,10 @@
         "bookmarks": 0
       }
     },
-    "https://medium.com/@chipmunkworks/the-helicopter-problem-9bfec2cfdfab": {
-      "url": "https://medium.com/@chipmunkworks/the-helicopter-problem-9bfec2cfdfab",
-      "author": "treelover",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://phrack.org/issues/73/reflections-on-trusting-ai-a-virus-inside-an-llm_md": {
+      "url": "https://phrack.org/issues/73/reflections-on-trusting-ai-a-virus-inside-an-llm_md",
+      "author": "Alien1Being",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -314,10 +236,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.ycombinator.com/launches/XcZ-rightnow-own-your-ai-at-full-speed": {
-      "url": "https://www.ycombinator.com/launches/XcZ-rightnow-own-your-ai-at-full-speed",
-      "author": "Jr23_xd",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.afr.com/technology/test-shows-graduates-using-ai-can-outperform-some-managers-atlassian-20261112-p61dog": {
+      "url": "https://www.afr.com/technology/test-shows-graduates-using-ai-can-outperform-some-managers-atlassian-20261112-p61dog",
+      "author": "Alien1Being",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -327,10 +249,10 @@
         "bookmarks": 0
       }
     },
-    "https://echo.ls/posts/gemini-decision-ai-voices": {
-      "url": "https://echo.ls/posts/gemini-decision-ai-voices/",
-      "author": "maplet",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.theverge.com/tech/1036111/satya-nadella-says-hes-agi-pilled-now": {
+      "url": "https://www.theverge.com/tech/1036111/satya-nadella-says-hes-agi-pilled-now",
+      "author": "Nilay Patel",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -340,10 +262,10 @@
         "bookmarks": 0
       }
     },
-    "https://hep-open-release.org": {
-      "url": "https://hep-open-release.org/",
-      "author": "xqcgrek2",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.washingtonsun.com/technology/bank-ceos-nsa-tell-congress-ai-driven-patches-behind-outages": {
+      "url": "https://www.washingtonsun.com/technology/bank-ceos-nsa-tell-congress-ai-driven-patches-behind-outages",
+      "author": "ryeights",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -353,10 +275,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.dialogkey.com/careers/119ce7f304": {
-      "url": "https://www.dialogkey.com/careers/119ce7f304",
-      "author": "CathereneNganga",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.cnbc.com/2026/11/16/imf-georgieva-warning-ai-circular-financing.html": {
+      "url": "https://www.cnbc.com/2026/11/16/imf-georgieva-warning-ai-circular-financing.html",
+      "author": "ryan_j_naughton",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -366,10 +288,10 @@
         "bookmarks": 0
       }
     },
-    "https://grok.com/share/bGVnYWN5_4f06d401-90e9-4ed4-bad8-89e3b4fadde2": {
-      "url": "https://grok.com/share/bGVnYWN5_4f06d401-90e9-4ed4-bad8-89e3b4fadde2",
-      "author": "gmays",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://revscope.co/blog/search-seo-geo-2026": {
+      "url": "https://revscope.co/blog/search-seo-geo-2026/",
+      "author": "slashdev",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -379,10 +301,114 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/tech/1035027/tech-leaders-nvidia-jensen-huang-theories": {
-      "url": "https://www.theverge.com/tech/1035027/tech-leaders-nvidia-jensen-huang-theories",
+    "https://www.mdkit.ai": {
+      "url": "https://www.mdkit.ai",
+      "author": "tannerjames711",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://github.com/avelone123123/shard": {
+      "url": "https://github.com/avelone123123/shard",
+      "author": "avelone",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/news/1035957/meta-alexandr-wang-sam-altman-instagram-ai-deepfake": {
+      "url": "https://www.theverge.com/news/1035957/meta-alexandr-wang-sam-altman-instagram-ai-deepfake",
+      "author": "Mia Sato",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.nytimes.com/2026/11/17/us/politics/ai-security-bug-java.html": {
+      "url": "https://www.nytimes.com/2026/11/17/us/politics/ai-security-bug-java.html",
+      "author": "donohoe",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://2tinteractive.com/watch/episodes/5726": {
+      "url": "https://2tinteractive.com/watch/episodes/5726/",
+      "author": "LebToki",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://github.com/eltzanis/SystemOneAgents": {
+      "url": "https://github.com/eltzanis/SystemOneAgents",
+      "author": "mklont",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.ft.com/content/e95adad4-b428-477d-9716-92172bbd199f": {
+      "url": "https://www.ft.com/content/e95adad4-b428-477d-9716-92172bbd199f",
+      "author": "petethomas",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/tech/1036032/nvidia-q3-2027-jensen-huang": {
+      "url": "https://www.theverge.com/tech/1036032/nvidia-q3-2027-jensen-huang",
+      "author": "Jay Peters",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/tech/1035756/google-spark-ai-tasks-free": {
+      "url": "https://www.theverge.com/tech/1035756/google-spark-ai-tasks-free",
       "author": "Emma Roth",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -392,10 +418,23 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/ai-artificial-intelligence/1034815/california-openai-hugging-face-lawsuit": {
-      "url": "https://www.theverge.com/ai-artificial-intelligence/1034815/california-openai-hugging-face-lawsuit",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+    "https://www.theverge.com/tech/1035420/jensen-huang-nvidia-return-as-ceo-statement": {
+      "url": "https://www.theverge.com/tech/1035420/jensen-huang-nvidia-return-as-ceo-statement",
+      "author": "Jay Peters",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/policy/1035410/doj-megaspeed-nvidia-investigation-update": {
+      "url": "https://www.theverge.com/policy/1035410/doj-megaspeed-nvidia-investigation-update",
+      "author": "Stevie Bonifield",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -408,7 +447,33 @@
     "https://www.theverge.com/ai-artificial-intelligence/1034787/sam-altman-ram-shortage-semafor": {
       "url": "https://www.theverge.com/ai-artificial-intelligence/1034787/sam-altman-ram-shortage-semafor",
       "author": "Stevie Bonifield",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/tech/1035027/tech-leaders-nvidia-jensen-huang-theories": {
+      "url": "https://www.theverge.com/tech/1035027/tech-leaders-nvidia-jensen-huang-theories",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/ai-artificial-intelligence/1034815/california-openai-hugging-face-lawsuit": {
+      "url": "https://www.theverge.com/ai-artificial-intelligence/1034815/california-openai-hugging-face-lawsuit",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -421,85 +486,7 @@
     "https://www.theverge.com/science/1034694/nuclear-energy-constellation-earnings-data-centers-democrats": {
       "url": "https://www.theverge.com/science/1034694/nuclear-energy-constellation-earnings-data-centers-democrats",
       "author": "Ellen Thomas",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/ai-artificial-intelligence/1034668/data-centers-electricity-climate-pollution-study-harvard": {
-      "url": "https://www.theverge.com/ai-artificial-intelligence/1034668/data-centers-electricity-climate-pollution-study-harvard",
-      "author": "Justine Calma",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/tech/1034581/apple-intelligence-siri-ai-daily-usage-limits-icloud-subscription": {
-      "url": "https://www.theverge.com/tech/1034581/apple-intelligence-siri-ai-daily-usage-limits-icloud-subscription",
-      "author": "Andrew Liszewski",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/policy/1034527/openai-csam-classifier": {
-      "url": "https://www.theverge.com/policy/1034527/openai-csam-classifier",
-      "author": "Lauren Feiner",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/tech/1034501/nvidia-board-jensen-huang-not-bringing-back": {
-      "url": "https://www.theverge.com/tech/1034501/nvidia-board-jensen-huang-not-bringing-back",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/tech/1034083/audible-audio-discovery-ai-feature-availability": {
-      "url": "https://www.theverge.com/tech/1034083/audible-audio-discovery-ai-feature-availability",
-      "author": "Jess Weatherbed",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/tech/1034110/google-ask-maps-ai-trip-planning": {
-      "url": "https://www.theverge.com/tech/1034110/google-ask-maps-ai-trip-planning",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-17T08:42:05.052007+00:00",
+      "captured_at": "2026-11-18T08:06:02.963693+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
