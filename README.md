@@ -13,10 +13,11 @@
 
 <!-- GUA:INDEX:START -->
 
-**最新一页**：[2026-11-18 · 仅链接汇总：OpenAI launches GPT-6.2 Astra…](gua/2026-11-18.md) — 吃瓜指数 10/100（微）
+**最新一页**：[2026-11-19 · 仅链接汇总：AI cannot read between the li…](gua/2026-11-19.md) — 吃瓜指数 10/100（微）
 
 | 日期 | 头条 | 吃瓜指数 | 链接 |
 | --- | --- | --- | --- |
+| 2026-11-19 | 仅链接汇总：AI cannot read between the li… | 10（微） | [打开](gua/2026-11-19.md) |
 | 2026-11-18 | 仅链接汇总：OpenAI launches GPT-6.2 Astra… | 10（微） | [打开](gua/2026-11-18.md) |
 | 2026-11-17 | 仅链接汇总：Extending separation logic to… | 10（微） | [打开](gua/2026-11-17.md) |
 | 2026-11-16 | 仅链接汇总：Amazon MadPot: Honeypot for A… | 10（微） | [打开](gua/2026-11-16.md) |
