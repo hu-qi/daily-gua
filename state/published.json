@@ -45,6 +45,11 @@
       "url": "http://ricapar.net/ClawDOS/",
       "date": "2026-11-21",
       "first_published_at": "2026-11-21T07:53:23.586855+00:00"
+    },
+    "https://aws.amazon.com/blogs/aws/test-your-applications-against-aws-locally-with-aws-emulator": {
+      "url": "https://aws.amazon.com/blogs/aws/test-your-applications-against-aws-locally-with-aws-emulator/",
+      "date": "2026-11-22",
+      "first_published_at": "2026-11-22T07:39:52.705777+00:00"
     }
   }
 }
