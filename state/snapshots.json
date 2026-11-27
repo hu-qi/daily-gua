@@ -1,141 +1,11 @@
 {
   "version": 1,
-  "captured_at": "2026-11-26T09:02:31.971793+00:00",
+  "captured_at": "2026-11-27T09:19:46.494293+00:00",
   "posts": {
-    "https://michelenasti.com/2026/confusion-and-rejection-about-ai": {
-      "url": "https://michelenasti.com/2026/confusion-and-rejection-about-ai/",
-      "author": "musikele",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://play.google.com/store/apps/details": {
-      "url": "https://play.google.com/store/apps/details?id=com.soprso.dhurandharai&hl=en_US",
-      "author": "johnniins",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://futuremajor.com/en/ai-map": {
-      "url": "https://futuremajor.com/en/ai-map",
-      "author": "cyvaid",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.techspot.com/news/114653-phison-shows-ssd-design-npu-64gb-memory-runs.html": {
-      "url": "https://www.techspot.com/news/114653-phison-shows-ssd-design-npu-64gb-memory-runs.html",
-      "author": "rbanffy",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.wired.com/story/ai-agents-can-get-honeypotted-too-aw": {
-      "url": "https://www.wired.com/story/ai-agents-can-get-honeypotted-too-aw/",
-      "author": "jonbaer",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://arxiv.org/abs/2611.31083": {
-      "url": "https://arxiv.org/abs/2611.31083",
-      "author": "azhenley",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://enterpriseai.economictimes.indiatimes.com/news/industry/when-ai-makes-your-advantage-abundant-where-does-the-next-edge-lie/136159092": {
-      "url": "https://enterpriseai.economictimes.indiatimes.com/news/industry/when-ai-makes-your-advantage-abundant-where-does-the-next-edge-lie/136159092",
-      "author": "motionlessveloc",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.youtube.com/watch": {
-      "url": "https://www.youtube.com/watch?v=ghxoAM5io18",
-      "author": "DarenWatson",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.audi.com/en/media-releases/audi-integrates-new-app-with-ai-assistant-for-mobile-work-in-the-car-with-cerence-ai-and-microsoft-18450": {
-      "url": "https://www.audi.com/en/media-releases/audi-integrates-new-app-with-ai-assistant-for-mobile-work-in-the-car-with-cerence-ai-and-microsoft-18450",
-      "author": "taubek",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.edutopia.org/article/does-ai-help-students-learn": {
-      "url": "https://www.edutopia.org/article/does-ai-help-students-learn/",
-      "author": "RRWagner",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
     "https://news.ycombinator.com/item": {
-      "url": "https://news.ycombinator.com/item?id=50651911",
-      "author": "fairetjrs",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+      "url": "https://news.ycombinator.com/item?id=50664618",
+      "author": "thaherster",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -145,10 +15,36 @@
         "bookmarks": 0
       }
     },
-    "https://precisely.ai/explore": {
-      "url": "https://precisely.ai/explore",
+    "https://aiwatchdogs.in": {
+      "url": "https://aiwatchdogs.in/",
+      "author": "axolotl_raja",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://github.com/SmartMobileHouse/clinical-trial-decision-lab": {
+      "url": "https://github.com/SmartMobileHouse/clinical-trial-decision-lab",
+      "author": "jpietrus1",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://keplercompute.com/act-one": {
+      "url": "https://keplercompute.com/act-one",
       "author": "peter_d_sherman",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -158,10 +54,10 @@
         "bookmarks": 0
       }
     },
-    "https://arstechnica.com/security/2026/11/amazon-says-hackers-ai-agents-found-and-exploited-0-day-with-little-human-input": {
-      "url": "https://arstechnica.com/security/2026/11/amazon-says-hackers-ai-agents-found-and-exploited-0-day-with-little-human-input/",
-      "author": "gmays",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://www.forbesafrica.com/current-affairs/2026/11/25/south-africa-launches-5-9-million-ai-start-up-initiative-professor-underlines-requirements": {
+      "url": "https://www.forbesafrica.com/current-affairs/2026/11/25/south-africa-launches-5-9-million-ai-start-up-initiative-professor-underlines-requirements",
+      "author": "Ratelman",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -171,10 +67,10 @@
         "bookmarks": 0
       }
     },
-    "https://github.com/OgnjenAdzic28/hush": {
-      "url": "https://github.com/OgnjenAdzic28/hush",
-      "author": "Ogi28",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://arxiv.org/abs/2604.04990": {
+      "url": "https://arxiv.org/abs/2604.04990",
+      "author": "andsoitis",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -184,10 +80,10 @@
         "bookmarks": 0
       }
     },
-    "https://gameautoresearch.github.io": {
-      "url": "https://gameautoresearch.github.io/",
-      "author": "luu",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://newbmiao.github.io/what-matters-in-aiops.html": {
+      "url": "https://newbmiao.github.io/what-matters-in-aiops.html",
+      "author": "newbmiao",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -197,10 +93,10 @@
         "bookmarks": 0
       }
     },
-    "https://talira.ai": {
-      "url": "https://talira.ai/",
-      "author": "nathan_f77",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://www.seangoedecke.com/who-gets-to-decide-if-something-is-written-by-ai": {
+      "url": "https://www.seangoedecke.com/who-gets-to-decide-if-something-is-written-by-ai/",
+      "author": "Jasonsf737",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -210,10 +106,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.bloomberg.com/news/articles/2026-11-25/stomach-churning-swings-rock-wall-street-as-ai-doubts-creep-in": {
-      "url": "https://www.bloomberg.com/news/articles/2026-11-25/stomach-churning-swings-rock-wall-street-as-ai-doubts-creep-in",
-      "author": "petethomas",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://www.groundbrkr.com/p/mark-to-swap-how-the-market-is-mispricing": {
+      "url": "https://www.groundbrkr.com/p/mark-to-swap-how-the-market-is-mispricing",
+      "author": "mudil",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -223,10 +119,10 @@
         "bookmarks": 0
       }
     },
-    "https://heyorbo.com": {
-      "url": "https://heyorbo.com",
-      "author": "pyonic",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://construct22.com": {
+      "url": "https://construct22.com/",
+      "author": "utiiiD",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -236,10 +132,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.mindstudio.ai/blog/ai-agents-shopping-access-wars": {
-      "url": "https://www.mindstudio.ai/blog/ai-agents-shopping-access-wars",
-      "author": "GloVin",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://beattape.ai": {
+      "url": "https://beattape.ai/",
+      "author": "pj4533",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -249,10 +145,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.rickmanelius.com/p/exhibit-a-with-ai-dont-skip-or-write": {
-      "url": "https://www.rickmanelius.com/p/exhibit-a-with-ai-dont-skip-or-write",
-      "author": "mooreds",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "x:2126195898795573437": {
+      "url": "https://twitter.com/martinmaritsch/status/2126195898795573437",
+      "author": "masquare",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -262,10 +158,10 @@
         "bookmarks": 0
       }
     },
-    "https://github.com/kbr-/shit-with-good-formatting": {
-      "url": "https://github.com/kbr-/shit-with-good-formatting",
-      "author": "kbr-",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "x:2126079107817787693": {
+      "url": "https://twitter.com/secparam/status/2126079107817787693",
+      "author": "justusw",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -275,10 +171,10 @@
         "bookmarks": 0
       }
     },
-    "https://wordspies.com/daily": {
-      "url": "https://wordspies.com/daily",
-      "author": "hardicecream",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://alexchen-imgbot-sales.containers.snapdeploy.app": {
+      "url": "https://alexchen-imgbot-sales.containers.snapdeploy.app/",
+      "author": "alexchen-dev",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -288,10 +184,62 @@
         "bookmarks": 0
       }
     },
-    "https://mscience.com": {
-      "url": "https://mscience.com/",
-      "author": "vismit2000",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://byoa.rippling.computer": {
+      "url": "https://byoa.rippling.computer/",
+      "author": "_mad_eye_",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://ashuteacher.vercel.app": {
+      "url": "https://ashuteacher.vercel.app",
+      "author": "sanzayageminite",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.aamc.org/news/doctors-beware-ai-threatens-weaken-your-relationships-patients": {
+      "url": "https://www.aamc.org/news/doctors-beware-ai-threatens-weaken-your-relationships-patients",
+      "author": "madihaa",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://github.com/deedy/chess-chatarunga/blob/main/docs/paper.pdf": {
+      "url": "https://github.com/deedy/chess-chatarunga/blob/main/docs/paper.pdf",
+      "author": "iamronaldo",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.phoronix.com/news/Linus-Torvalds-EXT4-AI-Big": {
+      "url": "https://www.phoronix.com/news/Linus-Torvalds-EXT4-AI-Big",
+      "author": "droidjj",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -303,34 +251,8 @@
     },
     "https://www.london.edu/think/ai-bubble-about-to-burst": {
       "url": "https://www.london.edu/think/ai-bubble-about-to-burst",
-      "author": "madihaa",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://2tinteractive.com/watch/episodes/5717": {
-      "url": "https://2tinteractive.com/watch/episodes/5717/",
-      "author": "LebToki",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://blog.cloudflare.com/search-for-agents": {
-      "url": "https://blog.cloudflare.com/search-for-agents/",
       "author": "nreece",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -340,10 +262,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/entertainment/1042221/google-my-channel-ai-video-patent": {
-      "url": "https://www.theverge.com/entertainment/1042221/google-my-channel-ai-video-patent",
-      "author": "Charles Pulliam-Moore",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://www.phoronix.com/news/Omarchy-4.6-Released": {
+      "url": "https://www.phoronix.com/news/Omarchy-4.6-Released",
+      "author": "mikece",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -353,10 +275,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/science/1042278/spacex-fcc-starmind-ai-space-data-centers": {
-      "url": "https://www.theverge.com/science/1042278/spacex-fcc-starmind-ai-space-data-centers",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://www.reuters.com/business/media-telecom/musk-says-every-child-us-will-get-two-spacex-shares-2026-11-26": {
+      "url": "https://www.reuters.com/business/media-telecom/musk-says-every-child-us-will-get-two-spacex-shares-2026-11-26/",
+      "author": "JumpCrisscross",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -366,10 +288,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/gadgets/1042162/nothing-ear-note-ai-earbuds-reveal": {
-      "url": "https://www.theverge.com/gadgets/1042162/nothing-ear-note-ai-earbuds-reveal",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://scolast.com": {
+      "url": "https://scolast.com",
+      "author": "PavleMiha",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -379,10 +301,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/tech/1042071/meta-amazon-muse-ai-shopping-discussions": {
-      "url": "https://www.theverge.com/tech/1042071/meta-amazon-muse-ai-shopping-discussions",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://lefttosolve.com": {
+      "url": "https://lefttosolve.com/",
+      "author": "frozenseven",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -392,10 +314,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology": {
-      "url": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://the-decoder.com/ai-agents-now-control-part-of-deepminds-compute-for-gemini-experiments-but-recursive-self-improvement-remains-distant": {
+      "url": "https://the-decoder.com/ai-agents-now-control-part-of-deepminds-compute-for-gemini-experiments-but-recursive-self-improvement-remains-distant/",
+      "author": "geox",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -405,36 +327,10 @@
         "bookmarks": 0
       }
     },
-    "https://www.theverge.com/entertainment/1041417/david-fincher-netflix-cliff-booth-ai-interpositive": {
-      "url": "https://www.theverge.com/entertainment/1041417/david-fincher-netflix-cliff-booth-ai-interpositive",
-      "author": "Charles Pulliam-Moore",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/entertainment/1041362/tidal-ai-music-ban": {
-      "url": "https://www.theverge.com/entertainment/1041362/tidal-ai-music-ban",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
-      "metrics": {
-        "likes": 0,
-        "replies": 0,
-        "reposts": 0,
-        "quotes": 0,
-        "views": 0,
-        "bookmarks": 0
-      }
-    },
-    "https://www.theverge.com/ai-artificial-intelligence/1041227/the-new-york-times-warns-photographers-not-to-update-photoshop-over-ai-features": {
-      "url": "https://www.theverge.com/ai-artificial-intelligence/1041227/the-new-york-times-warns-photographers-not-to-update-photoshop-over-ai-features",
-      "author": "Emma Roth",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+    "https://neutrinodetect.one/app-carbon/p/9329f86fe52c": {
+      "url": "https://neutrinodetect.one/app-carbon/p/9329f86fe52c",
+      "author": "AnjanaMohawk",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -447,7 +343,111 @@
     "https://www.theverge.com/tech/1041222/jensen-huang-nvidia-scandal-deepfakes": {
       "url": "https://www.theverge.com/tech/1041222/jensen-huang-nvidia-scandal-deepfakes",
       "author": "Kat Tenbarge",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/policy/1042620/character-ai-sale-state-ags-block-selling-users-chats": {
+      "url": "https://www.theverge.com/policy/1042620/character-ai-sale-state-ags-block-selling-users-chats",
+      "author": "Terrence O’Brien",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/entertainment/1042221/google-my-channel-ai-video-patent": {
+      "url": "https://www.theverge.com/entertainment/1042221/google-my-channel-ai-video-patent",
+      "author": "Charles Pulliam-Moore",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/science/1042278/spacex-fcc-starmind-ai-space-data-centers": {
+      "url": "https://www.theverge.com/science/1042278/spacex-fcc-starmind-ai-space-data-centers",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/gadgets/1042162/nothing-ear-note-ai-earbuds-reveal": {
+      "url": "https://www.theverge.com/gadgets/1042162/nothing-ear-note-ai-earbuds-reveal",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/tech/1042071/meta-amazon-muse-ai-shopping-discussions": {
+      "url": "https://www.theverge.com/tech/1042071/meta-amazon-muse-ai-shopping-discussions",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology": {
+      "url": "https://www.theverge.com/tech/1041571/jensen-huang-all-hands-nvidia-apology",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/entertainment/1041417/david-fincher-netflix-cliff-booth-ai-interpositive": {
+      "url": "https://www.theverge.com/entertainment/1041417/david-fincher-netflix-cliff-booth-ai-interpositive",
+      "author": "Charles Pulliam-Moore",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
+      "metrics": {
+        "likes": 0,
+        "replies": 0,
+        "reposts": 0,
+        "quotes": 0,
+        "views": 0,
+        "bookmarks": 0
+      }
+    },
+    "https://www.theverge.com/entertainment/1041362/tidal-ai-music-ban": {
+      "url": "https://www.theverge.com/entertainment/1041362/tidal-ai-music-ban",
+      "author": "Emma Roth",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
@@ -460,7 +460,7 @@
     "https://www.theverge.com/ai-artificial-intelligence/1040081/vibe-coding-open-source-music-firmware": {
       "url": "https://www.theverge.com/ai-artificial-intelligence/1040081/vibe-coding-open-source-music-firmware",
       "author": "Terrence O’Brien",
-      "captured_at": "2026-11-26T09:02:31.971793+00:00",
+      "captured_at": "2026-11-27T09:19:46.494293+00:00",
       "metrics": {
         "likes": 0,
         "replies": 0,
